@@ -1,5 +1,7 @@
 package com.gerardnico.niofs.sftp;
 
+import com.jcraft.jsch.SftpException;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.channels.FileChannel;
@@ -137,9 +139,21 @@ public class SftpFileSystemProvider extends FileSystemProvider {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Checks the existence, and optionally the accessibility, of a file.
+     * @param path
+     * @param modes
+     * @throws UnsupportedOperationException - an implementation is required to support checking for READ, WRITE, and EXECUTE access. This exception is specified to allow for the Access enum to be extended in future releases.
+     * @throws NoSuchFileException - if a file does not exist (optional specific exception)
+     * @throws AccessDeniedException - the requested access would be denied or the access cannot be determined because the Java virtual machine has insufficient privileges or other reasons. (optional specific exception)
+     * @throws IOException - if an I/O error occurs
+     * @throws SecurityException - In the case of the default provider, and a security manager is installed, the checkRead is invoked when checking read access to the file or only the existence of the file, the checkWrite is invoked when checking write access to the file, and checkExec is invoked when checking execute access.
+     */
     @Override
     public void checkAccess(Path path, AccessMode... modes) throws IOException {
-        throw new UnsupportedOperationException();
+
+       // This is seen as the attribute of a file (ie a path in Nio)
+        toSftpPath(path).checkAccess(modes);
     }
 
     @Override
@@ -149,7 +163,12 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 
     @Override
     public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
-        throw new UnsupportedOperationException();
+        if (type == BasicFileAttributes.class || type == SftpBasicFileAttributes.class)
+            return (A)toSftpPath(path).getFileAttributes();
+        else {
+            throw new UnsupportedOperationException("The class ("+type+") is not supported.");
+        }
+
     }
 
     @Override
@@ -162,5 +181,14 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 
         throw new UnsupportedOperationException();
 
+    }
+
+    // Checks that the given file is a SftpPath
+    static final SftpPath toSftpPath(Path path) {
+        if (path == null)
+            throw new NullPointerException();
+        if (!(path instanceof SftpPath))
+            throw new ProviderMismatchException();
+        return (SftpPath)path;
     }
 }

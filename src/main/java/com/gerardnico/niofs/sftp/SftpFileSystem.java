@@ -29,6 +29,16 @@ public class SftpFileSystem extends FileSystem {
     private final URI uri;
 
     private final Session session;
+
+    /**
+     * Is used in the system file provider
+     * to check the access
+     * @return ChannelSftp
+     */
+    protected ChannelSftp getChannelSftp() {
+        return channelSftp;
+    }
+
     private final ChannelSftp channelSftp;
     private final SftpFileSystemProvider sftpFileSystemProvider;
 
@@ -84,6 +94,7 @@ public class SftpFileSystem extends FileSystem {
 
     @Override
     public FileSystemProvider provider() {
+
         return this.sftpFileSystemProvider;
     }
 
@@ -102,6 +113,7 @@ public class SftpFileSystem extends FileSystem {
      */
     @Override
     public boolean isOpen() {
+
         return !this.channelSftp.isClosed();
     }
 
@@ -112,7 +124,9 @@ public class SftpFileSystem extends FileSystem {
      */
     @Override
     public boolean isReadOnly() {
-        return false;
+
+        throw new UnsupportedOperationException();
+
     }
 
     /**
@@ -122,25 +136,28 @@ public class SftpFileSystem extends FileSystem {
      */
     @Override
     public String getSeparator() {
-        return File.separator;
+
+        return "/";
     }
 
     @Override
     public Iterable<Path> getRootDirectories() {
         ArrayList<Path> rootDirectories = new ArrayList<Path>();
-        Path rootPath = new SftpPath.SftpPathBuilder(this, SftpPath.ROOT_PATH).build();
+        Path rootPath = SftpPath.get(this, SftpPath.ROOT_PREFIX);
         rootDirectories.add(rootPath);
         return rootDirectories;
     }
 
     @Override
     public Iterable<FileStore> getFileStores() {
-        return new ArrayList<FileStore>();
+
+        throw new UnsupportedOperationException();
+
     }
 
     @Override
     public Set<String> supportedFileAttributeViews() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -161,22 +178,22 @@ public class SftpFileSystem extends FileSystem {
             }
             path = sb.toString();
         }
-        return new SftpPath.SftpPathBuilder(this,path).build();
+        return SftpPath.get(this,path);
     }
 
     @Override
     public PathMatcher getPathMatcher(String syntaxAndPattern) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public UserPrincipalLookupService getUserPrincipalLookupService() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public WatchService newWatchService() throws IOException {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     public static class SftpFileSystemBuilder {

@@ -7,15 +7,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 
 public class FileSystemsTest {
@@ -27,7 +25,7 @@ public class FileSystemsTest {
     private static Integer port = 22999;
     private static String url = "sftp://" + user + ":" + pwd + "@" + host + ":" + port;
     private static FileSystemProvider sftpFileSystemProvider;
-    private static FileSystem fileSystem;
+    private static SftpFileSystem sftpFileSystem;
     private static URI uri;
 
     // Two tests:
@@ -53,14 +51,15 @@ public class FileSystemsTest {
         mockSftpServer.start();
 
         uri = new URI(url);
-        fileSystem = sftpFileSystemProvider.newFileSystem(uri, null);
+        sftpFileSystem = (SftpFileSystem) sftpFileSystemProvider.newFileSystem(uri, null);
+
 
     }
 
     @AfterClass
     static public void closeResources() throws IOException {
 
-        fileSystem.close();
+        sftpFileSystem.close();
         mockSftpServer.stop();
 
     }
@@ -76,14 +75,14 @@ public class FileSystemsTest {
     @Test
     public void sftpFileSystemIsNotNull() throws Exception {
 
-        assertNotNull(fileSystem);
+        assertNotNull(sftpFileSystem);
 
     }
 
     @Test
     public void sftpFileSystemIsOpen() throws Exception {
 
-        assertEquals("The File System must be opened", true,fileSystem.isOpen());
+        assertEquals("The File System must be opened", true, sftpFileSystem.isOpen());
 
     }
 
@@ -91,11 +90,26 @@ public class FileSystemsTest {
     public void moveIn() throws IOException {
 
         Path src = Paths.get("./README.md");
-        Path dst = fileSystem.getPath("./README.md");
+        Path dst = sftpFileSystem.getPath("./README.md");
         Files.move(src, dst);
     }
 
-//    Path mf = fileSystem.getPath("testFileRead.txt");
+    @Test
+    public void basicFileAttribute() throws IOException {
+        Path file = sftpFileSystem.getPath("src","test","resources","sftp", "testFileRead.txt");
+        BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class);
+        assertNotNull("The file exist, we must get attributes", attrs);
+        assertFalse("This is not a directory", attrs.isDirectory());
+        assertTrue("This is a regular file",attrs.isRegularFile());
+        assertFalse("This is not an symbolic link",attrs.isSymbolicLink());
+        assertFalse("This is not an other file",attrs.isOther());
+        assertEquals("The file size is",38,attrs.size());
+        assertEquals("The last modified time is: ","2015-09-17T12:49:26Z",attrs.lastModifiedTime().toString());
+        assertEquals("The last modified time is the creation time (Creation time doesn't exist in SFTP",attrs.creationTime(),attrs.lastModifiedTime());
+        assertEquals("The last access time is ","2015-11-20T17:42:31Z",attrs.lastAccessTime().toString());
+    }
+
+//    Path mf = sftpFileSystem.getPath("testFileRead.txt");
 //    InputStream in = mf.newInputStream();
 
 }

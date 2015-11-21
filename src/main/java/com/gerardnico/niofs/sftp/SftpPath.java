@@ -16,6 +16,10 @@
 
 package com.gerardnico.niofs.sftp;
 
+import com.jcraft.jsch.SftpATTRS;
+import com.jcraft.jsch.SftpException;
+import com.sun.nio.zipfs.ZipFileAttributes;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -26,19 +30,23 @@ import java.util.Iterator;
 
 /**
  * A Path implementation for SFTP.
+ * An object that may be used to locate a file in a file system.
+ * It will typically represent a system dependent file path.
  */
-public class SftpPath implements Path {
+class SftpPath implements Path {
 
 
-    static final String ROOT_PATH = "/";
-    private static final String PATH_SEP = "/";
+    protected static final String ROOT_PREFIX = "/";
+    protected final String PATH_SEPARATOR; // To avoid duplicate. It is initialized with the value of FileSystem.getSeparator();
     private final String path;
     private final SftpFileSystem sftpFileSystem;
 
 
-    private SftpPath(SftpPathBuilder sftpPathBuilder) {
-        this.sftpFileSystem = sftpPathBuilder.sftpFileSystem;
-        this.path = sftpPathBuilder.path;
+    private SftpPath(SftpFileSystem sftpFileSystem, String path) {
+
+        this.sftpFileSystem = sftpFileSystem;
+        this.path = path;
+        this.PATH_SEPARATOR = sftpFileSystem.getSeparator();
 
     }
 
@@ -47,171 +55,165 @@ public class SftpPath implements Path {
         return this.sftpFileSystem;
     }
 
-
     public boolean isAbsolute() {
+        if (this.path.startsWith(ROOT_PREFIX)) {
+            return true;
+        } else {
+            return false;
+        }
 
-        return path.startsWith(PATH_SEP);
     }
-
 
     public Path getRoot() {
-        if (path.equals(ROOT_PATH)) {
-            return this;
-        }
-        return new SftpPath.SftpPathBuilder(this.sftpFileSystem, ROOT_PATH).build();
-    }
-
-
-    public Path getFileName() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public Path getParent() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public int getNameCount() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-
-    public Path getName(int index) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public Path subpath(int beginIndex, int endIndex) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public boolean startsWith(Path other) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-
-    public boolean startsWith(String other) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-
-    public boolean endsWith(Path other) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-
-    public boolean endsWith(String other) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-
-    public Path normalize() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public Path resolve(Path other) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public Path resolve(String other) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Path resolveSibling(Path other) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public Path resolveSibling(String other) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public Path relativize(Path other) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public URI toUri() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public Path toAbsolutePath() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public Path toRealPath(LinkOption... options) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-
-    public File toFile() {
-
         throw new UnsupportedOperationException();
     }
 
+    public Path getFileName() {
+        throw new UnsupportedOperationException();
+    }
+
+    public Path getParent() {
+        throw new UnsupportedOperationException();
+    }
+
+    public int getNameCount() {
+        throw new UnsupportedOperationException();
+    }
+
+    public Path getName(int index) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Path subpath(int beginIndex, int endIndex) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean startsWith(Path other) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean startsWith(String other) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean endsWith(Path other) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean endsWith(String other) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Path normalize() {
+        throw new UnsupportedOperationException();
+    }
+
+    public Path resolve(Path other) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Path resolve(String other) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Path resolveSibling(Path other) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Path resolveSibling(String other) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Path relativize(Path other) {
+        throw new UnsupportedOperationException();
+    }
+
+    public URI toUri() {
+        throw new UnsupportedOperationException();
+    }
+
+    public Path toAbsolutePath() {
+        if (this.isAbsolute()) {
+            return this;
+        } else {
+            try {
+                return get(sftpFileSystem,sftpFileSystem.getChannelSftp().getHome()+sftpFileSystem.getSeparator()+this.path);
+            } catch (SftpException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
+    }
+
+    /**
+     * A static constructor
+     * You canm also get a path from a provider with an URI.
+     * @param sftpFileSystem
+     * @param path
+     * @return
+     */
+    protected static Path get(SftpFileSystem sftpFileSystem, String path) {
+        return new SftpPath(sftpFileSystem,path);
+    }
+
+    public Path toRealPath(LinkOption... options) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    public File toFile() {
+        throw new UnsupportedOperationException();
+    }
 
     public WatchKey register(WatchService watcher, Kind<?>[] events, Modifier... modifiers) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
-
 
     public WatchKey register(WatchService watcher, Kind<?>... events) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
-
 
     public Iterator<Path> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
-
 
     public int compareTo(Path other) {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
-    public String getPathString() {
+    protected SftpPosixFileAttributes getFileAttributes() {
+        return new SftpPosixFileAttributes(this);
+    }
+
+    public String toSring() {
         return this.path;
     }
 
-    public static class SftpPathBuilder {
-        private final SftpFileSystem sftpFileSystem;
-        private final String path;
-
-        public SftpPathBuilder(SftpFileSystem sftpFileSystem, String s) {
-            this.sftpFileSystem = sftpFileSystem;
-            this.path = s;
+    void checkAccess(AccessMode... modes) throws IOException {
+        boolean w = false;
+        boolean x = false;
+        for (AccessMode mode : modes) {
+            switch (mode) {
+                case READ:
+                    break;
+                case WRITE:
+                    w = true;
+                    break;
+                case EXECUTE:
+                    x = true;
+                    break;
+                default:
+                    throw new UnsupportedOperationException();
+            }
         }
-
-        public SftpPath build(){
-            return new SftpPath(this);
-        }
+//        ZipFileAttributes attrs = this.sftpFileSystem.getChannelSftp().getFileAttributes(getResolvedPath());
+//        if (attrs == null && (path.length != 1 || path[0] != '/'))
+//            throw new NoSuchFileException(toString());
+//        if (w) {
+//            if (zfs.isReadOnly())
+//                throw new AccessDeniedException(toString());
+//        }
+//        if (x)
+//            throw new AccessDeniedException(toString());
     }
 }

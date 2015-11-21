@@ -22,7 +22,7 @@
             <name>Nicolas GERARD</name>
             <email>nico@gerardnico.com</email>
             <url>http://gerardnico.com</url>
-            <timezone>+1</timezone>
+            <timezone>Europe/Amsterdam</timezone>
         </developer>
     </developers>
 

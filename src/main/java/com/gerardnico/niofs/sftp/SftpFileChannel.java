@@ -11,7 +11,7 @@ import java.nio.channels.WritableByteChannel;
 /**
  * Created by gerard on 20-11-2015.
  */
-public class SftpFileChannel extends FileChannel {
+class SftpFileChannel extends FileChannel {
 
     @Override
     public int read(ByteBuffer dst) throws IOException {
