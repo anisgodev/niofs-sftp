@@ -1,3 +1,4 @@
 /target
 /niofs-sftp.iml
 /.idea
+/src/test/resources/sftp/README.md

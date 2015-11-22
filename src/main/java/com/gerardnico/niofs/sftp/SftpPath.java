@@ -16,9 +16,8 @@
 
 package com.gerardnico.niofs.sftp;
 
-import com.jcraft.jsch.SftpATTRS;
+import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.SftpException;
-import com.sun.nio.zipfs.ZipFileAttributes;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,21 +30,21 @@ import java.util.Iterator;
 /**
  * A Path implementation for SFTP.
  * An object that may be used to locate a file in a file system.
- * It will typically represent a system dependent file path.
+ * It will typically represent a system dependent file stringPath.
  */
 class SftpPath implements Path {
 
 
     protected static final String ROOT_PREFIX = "/";
     protected final String PATH_SEPARATOR; // To avoid duplicate. It is initialized with the value of FileSystem.getSeparator();
-    private final String path;
     private final SftpFileSystem sftpFileSystem;
+    private String stringPath;
 
 
-    private SftpPath(SftpFileSystem sftpFileSystem, String path) {
+    private SftpPath(SftpFileSystem sftpFileSystem, String stringPath) {
 
         this.sftpFileSystem = sftpFileSystem;
-        this.path = path;
+        this.stringPath = stringPath;
         this.PATH_SEPARATOR = sftpFileSystem.getSeparator();
 
     }
@@ -56,7 +55,7 @@ class SftpPath implements Path {
     }
 
     public boolean isAbsolute() {
-        if (this.path.startsWith(ROOT_PREFIX)) {
+        if (this.stringPath.startsWith(ROOT_PREFIX)) {
             return true;
         } else {
             return false;
@@ -137,7 +136,7 @@ class SftpPath implements Path {
             return this;
         } else {
             try {
-                return get(sftpFileSystem,sftpFileSystem.getChannelSftp().getHome()+sftpFileSystem.getSeparator()+this.path);
+                return get(sftpFileSystem,sftpFileSystem.getChannelSftp().getHome()+sftpFileSystem.getSeparator()+this.stringPath);
             } catch (SftpException e) {
                 throw new RuntimeException(e);
             }
@@ -148,7 +147,7 @@ class SftpPath implements Path {
 
     /**
      * A static constructor
-     * You canm also get a path from a provider with an URI.
+     * You canm also get a stringPath from a provider with an URI.
      * @param sftpFileSystem
      * @param path
      * @return
@@ -181,39 +180,27 @@ class SftpPath implements Path {
         throw new UnsupportedOperationException();
     }
 
-    protected SftpPosixFileAttributes getFileAttributes() {
+    protected SftpPosixFileAttributes getFileAttributes() throws IOException {
         return new SftpPosixFileAttributes(this);
     }
 
-    public String toSring() {
-        return this.path;
+    public String toString() {
+        return this.stringPath;
     }
 
-    void checkAccess(AccessMode... modes) throws IOException {
-        boolean w = false;
-        boolean x = false;
-        for (AccessMode mode : modes) {
-            switch (mode) {
-                case READ:
-                    break;
-                case WRITE:
-                    w = true;
-                    break;
-                case EXECUTE:
-                    x = true;
-                    break;
-                default:
-                    throw new UnsupportedOperationException();
-            }
-        }
-//        ZipFileAttributes attrs = this.sftpFileSystem.getChannelSftp().getFileAttributes(getResolvedPath());
-//        if (attrs == null && (path.length != 1 || path[0] != '/'))
-//            throw new NoSuchFileException(toString());
-//        if (w) {
-//            if (zfs.isReadOnly())
-//                throw new AccessDeniedException(toString());
-//        }
-//        if (x)
-//            throw new AccessDeniedException(toString());
+    /**
+     * A shortcut to get the ChannelSftp saved in the file systen object
+     * @return ChannelSftp
+     */
+    protected ChannelSftp getChannelSftp() {
+        return this.sftpFileSystem.getChannelSftp();
+    }
+
+    /**
+     * String Path representation used internally to make all Sftp operations
+     * @return
+     */
+    protected String getStringPath() {
+        return stringPath;
     }
 }

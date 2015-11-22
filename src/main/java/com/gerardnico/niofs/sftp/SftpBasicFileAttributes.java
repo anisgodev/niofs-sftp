@@ -1,8 +1,11 @@
 package com.gerardnico.niofs.sftp;
 
+import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
 
+import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.logging.Logger;
@@ -19,11 +22,15 @@ public class SftpBasicFileAttributes implements BasicFileAttributes {
     // The time that gets back miss one/two hours and I can't find a time zone cause
     static final long timeOffset = 60*60*1000;
 
-    protected SftpBasicFileAttributes(SftpPath path)  {
+    protected SftpBasicFileAttributes(SftpPath path) throws IOException {
         try {
-            this.attrs = ((SftpFileSystem) path.getFileSystem()).getChannelSftp().stat(path.toSring());
+            this.attrs = ((SftpFileSystem) path.getFileSystem()).getChannelSftp().stat(path.toString());
         } catch (SftpException e) {
-            throw new RuntimeException("Unable to get the file attributes of ("+path.toSring()+")",e);
+            if (!(e.id == ChannelSftp.SSH_FX_NO_SUCH_FILE)){
+                throw new NoSuchFileException("The file doesn't exist");
+            } else {
+                throw new IOException("Unable to get the file attributes of (" + path.toString() + ")", e);
+            }
         }
     }
 

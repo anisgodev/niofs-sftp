@@ -10,12 +10,5 @@ The format is borrowed from Apache Common VFS.
 
 ## Examples
 
-    sftp://myusername:mypassword@somehost/pub/downloads/somefile.tgz
+    sftp://myusername:mypassword@somehost
 
-## Configuration
-
-By default, the path is relative to the user's home directory. This can be changed with:
-
-```java
-FtpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(options, false);
-```
