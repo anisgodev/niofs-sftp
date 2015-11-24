@@ -56,7 +56,7 @@ public class SftpFileSystem extends FileSystem {
         // Extract the user and the password
         String userInfo = this.uri.getUserInfo();
         String user = userInfo.substring(0, userInfo.indexOf(":"));
-        String password = userInfo.substring(userInfo.indexOf(":"), userInfo.length());
+        String password = userInfo.substring(userInfo.indexOf(":")+1, userInfo.length());
 
         // Port
         int port;
