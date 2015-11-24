@@ -4,13 +4,28 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>iofs-sftp</artifactId>
     <groupId>com.gerardnico</groupId>
+    <artifactId>niofs-sftp</artifactId>
     <packaging>jar</packaging>
-    <version>1.0</version>
+    <version>1.0.0</version>
 
-    <name>A File system implementation based on Sftp</name>
-    <url>https://github.com/gerardnico/iofs-sftp</url>
+    <!-- A common and acceptable practice for name is to assemble it from the coordinates using Maven properties -->
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>A NIO File system implementation based on Sftp.</description>
+    <url>https://github.com/gerardnico/niofs-sftp</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:gerardnico/niofs-sftp.git</connection>
+        <developerConnection>scm:git:git@github.com:gerardnico/niofs-sftp.git</developerConnection>
+        <url>git@github.com:gerardnico/niofs-sftp.git</url>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -47,4 +62,24 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>remote-repository</id>
+            <name>Nico Remote</name>
+            <url>scp://gerardni@ftp.gerardnico.com:22/home/gerardni/www/m2-repo</url>
+        </repository>
+    </distributionManagement>
+
+    <build>
+        <extensions>
+            <!-- Enabling the use of SSH -->
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+                <version>2.10</version>
+            </extension>
+        </extensions>
+    </build>
+
 </project>
