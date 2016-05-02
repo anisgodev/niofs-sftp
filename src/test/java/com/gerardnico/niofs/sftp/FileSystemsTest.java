@@ -11,10 +11,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.*;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -113,24 +116,28 @@ public class FileSystemsTest {
     @Test
     public void posixFileAttribute() throws IOException {
         Path file = sftpFileSystem.getPath("src", "test", "resources", "sftp", "testFileRead.txt");
-        SftpPosixFileAttributes attrs = Files.readAttributes(file, SftpPosixFileAttributes.class);
-        assertNotNull("The file exist, we must get attributes", attrs);
-        assertFalse("This is not a directory", attrs.isDirectory());
-        assertTrue("This is a regular file", attrs.isRegularFile());
-        assertFalse("This is not an symbolic link", attrs.isSymbolicLink());
-        assertFalse("This is not an other file", attrs.isOther());
-        assertEquals("The file size is", 38, attrs.size());
+
+        // Modified Time
         // The date time of the file can be different between the local modification and the git commit :(
         // And then the local test may succeed while the continuous automation test may failed
         // Example:
         // Local: 2016-05-02T14:53:27Z
         // Server (Travis): 2016-05-02T14:56:10Z
-        // Therefore we test the best case
-        assertEquals("The last modified time is: ", "2016-05-02T1", attrs.lastModifiedTime().toString().substring(0,12));
-        assertEquals("The last modified time is the creation time (Creation time doesn't exist in SFTP", attrs.creationTime(), attrs.lastModifiedTime());
+        // Therefore we set it first
+        String lastModifiedTimeTxt = "2016-05-02T14:14:14Z";
+        FileTime lastModifiedTime = FileTime.from(Instant.parse(lastModifiedTimeTxt));
+        Files.setLastModifiedTime(file,lastModifiedTime);
+
+        // AccessTime
         // Same problem than with modified time
-        // Best case is tested
-        assertEquals("The last access time is ", "2016-05-02T", attrs.lastAccessTime().toString().substring(0,11));
+        // We then set it first
+        String lastAccessTimeTxt = "2016-05-02T13:13:13Z";
+        FileTime lastAccessTime = FileTime.from(Instant.parse(lastAccessTimeTxt));
+        Files.setAttribute(file, "basic:lastAccessTime", lastAccessTime, java.nio.file.LinkOption.NOFOLLOW_LINKS);
+
+        // The default permission may be not the same
+        // As they depends of the process permission when the file is created
+        // We set them first
         Set<PosixFilePermission> expectedPermission = new HashSet<java.nio.file.attribute.PosixFilePermission>();
         expectedPermission.add(PosixFilePermission.GROUP_EXECUTE);
         expectedPermission.add(PosixFilePermission.OTHERS_READ);
@@ -141,11 +148,23 @@ public class FileSystemsTest {
         expectedPermission.add(PosixFilePermission.OWNER_WRITE);
         expectedPermission.add(PosixFilePermission.OWNER_EXECUTE);
         expectedPermission.add(PosixFilePermission.GROUP_READ);
+        Files.setPosixFilePermissions(file,expectedPermission);
+
+        // The test can start
+        SftpPosixFileAttributes attrs = Files.readAttributes(file, SftpPosixFileAttributes.class);
+        assertNotNull("The file exist, we must get attributes", attrs);
+        assertFalse("This is not a directory", attrs.isDirectory());
+        assertTrue("This is a regular file", attrs.isRegularFile());
+        assertFalse("This is not an symbolic link", attrs.isSymbolicLink());
+        assertFalse("This is not an other file", attrs.isOther());
+        assertEquals("The file size is", 38, attrs.size());
+
+        assertEquals("The last modified time is: ", lastModifiedTimeTxt, attrs.lastModifiedTime().toString());
+        assertEquals("The last modified time is the creation time (Creation time doesn't exist in SFTP", attrs.creationTime(), attrs.lastModifiedTime());
+        assertEquals("The last access time is ", lastAccessTimeTxt, attrs.lastAccessTime().toString());
+
         assertEquals("The permissions are equal", expectedPermission, attrs.permissions());
+
     }
-
-
-//    Path mf = sftpFileSystem.getPath("testFileRead.txt");
-//    InputStream in = mf.newInputStream();
 
 }

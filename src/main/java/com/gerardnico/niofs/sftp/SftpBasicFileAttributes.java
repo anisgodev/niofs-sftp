@@ -20,27 +20,29 @@ public class SftpBasicFileAttributes implements BasicFileAttributes {
     public SftpATTRS attrs;
 
     // The time that gets back miss one/two hours and I can't find a time zone cause
-    static final long timeOffset = 60*60*1000;
+    // In Seconds, 2 hour
+    static final int timeOffset = 60*60;
+
 
     protected SftpBasicFileAttributes(SftpPath path) throws IOException {
         try {
-            this.attrs = ((SftpFileSystem) path.getFileSystem()).getChannelSftp().stat(path.toString());
+            this.attrs = path.getChannelSftp().stat(path.getStringPath());
         } catch (SftpException e) {
             if (!(e.id == ChannelSftp.SSH_FX_NO_SUCH_FILE)){
                 throw new NoSuchFileException("The file doesn't exist");
             } else {
-                throw new IOException("Unable to get the file attributes of (" + path.toString() + ")", e);
+                throw new IOException("Unable to get the file attributes of (" + path.getStringPath() + ")", e);
             }
         }
     }
 
     public FileTime lastModifiedTime() {
         // 2 hour
-        return FileTime.fromMillis((long) this.attrs.getMTime()*1000 + 2*timeOffset);
+        return FileTime.fromMillis( (long) (this.attrs.getMTime() + 2*timeOffset)*1000);
     }
 
     public FileTime lastAccessTime() {
-        return FileTime.fromMillis((long) this.attrs.getATime()*1000 + timeOffset);
+        return FileTime.fromMillis( (long) (this.attrs.getATime() + 2*timeOffset)*1000);
     }
 
     /**

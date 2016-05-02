@@ -31,7 +31,6 @@ public class SftpPosixFileAttributes extends SftpBasicFileAttributes implements 
 
         // The permission string in a list of PosixFilePermission
         List<PosixFilePermission> listPermissions = new ArrayList<PosixFilePermission>();
-        listPermissions.add(null);
         listPermissions.add(PosixFilePermission.OWNER_READ);
         listPermissions.add(PosixFilePermission.OWNER_WRITE);
         listPermissions.add(PosixFilePermission.OWNER_EXECUTE);

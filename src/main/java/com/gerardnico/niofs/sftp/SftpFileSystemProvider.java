@@ -7,9 +7,7 @@ import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -213,11 +211,21 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 
     @Override
     public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
-        throw new UnsupportedOperationException();
+        // The type permits to build and return the good view
+        // For now, there is only
+        //    - a basic implementations
+        if (type == BasicFileAttributeView.class ) {
+            return SftpFileBasicAttributeView.get(path);
+        } else if (type == PosixFileAttributeView.class) {
+            return SftpPosixFileAttributeView.get(path);
+        } else {
+            throw new UnsupportedOperationException("The class (" + type + ") is not supported.");
+        }
     }
 
     @Override
     public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
+
         if (type == BasicFileAttributes.class || type == SftpBasicFileAttributes.class || type == SftpPosixFileAttributes.class)
             return (A) toSftpPath(path).getFileAttributes();
         else {
@@ -244,7 +252,24 @@ public class SftpFileSystemProvider extends FileSystemProvider {
     @Override
     public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
 
-        throw new UnsupportedOperationException();
+        String type;
+        String attr;
+
+        int colonPos = attribute.indexOf(':');
+        if (colonPos == -1) {
+            type = "basic";
+            attr = attribute;
+        } else {
+            type = attribute.substring(0, colonPos++);
+            attr = attribute.substring(colonPos);
+        }
+        if (type.equals("basic")) {
+            SftpFileBasicAttributeView view = SftpFileBasicAttributeView.get(path);
+            view.setAttribute(attr, value);
+        } else {
+            throw new UnsupportedOperationException("view <" + type + "> is not supported");
+        }
+
 
     }
 
