@@ -126,7 +126,7 @@ public class FileSystemsTest {
         // Local: 2016-05-02T14:53:27Z
         // Server (Travis): 2016-05-02T14:56:10Z
         // Therefore we test the best case
-        assertEquals("The last modified time is: ", "2016-05-02T14:5", attrs.lastModifiedTime().toString().substring(0,15));
+        assertEquals("The last modified time is: ", "2016-05-02T1", attrs.lastModifiedTime().toString().substring(0,12));
         assertEquals("The last modified time is the creation time (Creation time doesn't exist in SFTP", attrs.creationTime(), attrs.lastModifiedTime());
         assertEquals("The last access time is ", "2016-05-02T13:53:27Z", attrs.lastAccessTime().toString());
         Set<PosixFilePermission> expectedPermission = new HashSet<java.nio.file.attribute.PosixFilePermission>();
