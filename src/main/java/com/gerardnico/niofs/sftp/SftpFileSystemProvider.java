@@ -114,7 +114,13 @@ public class SftpFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
-        throw new UnsupportedOperationException();
+
+        try {
+            toSftpPath(dir).createDirectory();
+        } catch (SftpException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     @Override

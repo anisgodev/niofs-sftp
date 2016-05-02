@@ -9,8 +9,11 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -90,12 +93,20 @@ public class FileSystemsTest {
     }
 
     @Test
-    public void moveIn() throws IOException {
+    public void sftpFilesCopyFromLocalToSftpMoveIn() throws IOException {
 
         Path src = Paths.get("./README.md");
         Path dst = sftpFileSystem.getPath("src", "test", "resources", "sftp", "README.md");
         Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING);
 //        assertFalse("Files doesn't exist",Files.exists(dst));
+    }
+
+    @Test
+    public void sftpFilesCreateFileTest() throws IOException {
+
+        Path dst = sftpFileSystem.getPath("target", "CreateFileTest.txt");
+        Files.createFile(dst);
+
     }
 
 

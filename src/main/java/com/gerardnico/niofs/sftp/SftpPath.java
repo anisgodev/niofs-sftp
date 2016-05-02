@@ -31,6 +31,12 @@ import java.util.Iterator;
  * A Path implementation for SFTP.
  * An object that may be used to locate a file in a file system.
  * It will typically represent a system dependent file stringPath.
+ *
+ * Let op:
+ * This sftp client has the concept of a current local directory and a current remote directory. These are not inherent to the protocol,
+ * but are used implicitly for all path-based commands sent to the server (for the remote directory) or accessing the local file system
+ * (for the local directory).
+ * They can be queried by lpwd() and pwd(), and changed by cd(dir) and lcd(dir).
  */
 class SftpPath implements Path {
 
@@ -39,6 +45,7 @@ class SftpPath implements Path {
     protected final String PATH_SEPARATOR; // To avoid duplicate. It is initialized with the value of FileSystem.getSeparator();
     private final SftpFileSystem sftpFileSystem;
     private String stringPath;
+    private String[] folders;
 
 
     private SftpPath(SftpFileSystem sftpFileSystem, String stringPath) {
@@ -46,6 +53,7 @@ class SftpPath implements Path {
         this.sftpFileSystem = sftpFileSystem;
         this.stringPath = stringPath;
         this.PATH_SEPARATOR = sftpFileSystem.getSeparator();
+        this.folders = stringPath.split( PATH_SEPARATOR );
 
     }
 
@@ -68,11 +76,18 @@ class SftpPath implements Path {
     }
 
     public Path getFileName() {
+        // FilenameUtils.getName(this.getPath()
         throw new UnsupportedOperationException();
     }
 
     public Path getParent() {
-        throw new UnsupportedOperationException();
+        String parent = "";
+        for ( String folder : this.folders ) {
+            if ( folder.length() > 0 ) {
+                parent += folder + PATH_SEPARATOR;
+            }
+        }
+        return new SftpPath(sftpFileSystem, parent);
     }
 
     public int getNameCount() {
@@ -202,5 +217,24 @@ class SftpPath implements Path {
      */
     protected String getStringPath() {
         return stringPath;
+    }
+
+    /**
+     * Implementation of the createDirectory function of the FileSystemProvider
+     * @throws SftpException
+     */
+    protected void createDirectory() throws SftpException {
+
+        for ( String folder : this.folders ) {
+            if ( folder.length() > 0 ) {
+                try {
+                    this.getChannelSftp().cd( folder );
+                }
+                catch ( SftpException e ) {
+                    this.getChannelSftp().mkdir( folder );
+                    this.getChannelSftp().cd( folder );
+                }
+            }
+        }
     }
 }
