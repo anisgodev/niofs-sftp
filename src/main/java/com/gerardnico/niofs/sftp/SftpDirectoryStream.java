@@ -1,10 +1,17 @@
 package com.gerardnico.niofs.sftp;
 
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.SftpException;
+
 import java.io.IOException;
+import java.nio.file.ClosedDirectoryStreamException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Vector;
 
 /**
  * Created by gerard on 18-05-2016.
@@ -14,6 +21,9 @@ public class SftpDirectoryStream implements DirectoryStream<Path> {
     private final SftpPath path;
     private final Filter<? super Path> filter;
     private final SftpBasicFileAttributes fileAttribute;
+    private boolean isClosed = false;
+    private Iterator<Path> pathIterator;
+
 
     public SftpDirectoryStream(SftpPath path, Filter<? super Path> filter) throws IOException {
         this.path = path;
@@ -26,15 +36,36 @@ public class SftpDirectoryStream implements DirectoryStream<Path> {
 
     @Override
     public Iterator<Path> iterator() {
-        // To continue
-        throw new UnsupportedOperationException();
+
+        if (isClosed)
+            throw new ClosedDirectoryStreamException();
+
+        if (pathIterator != null)
+            throw new IllegalStateException("Iterator has already been returned");
+
+        List<Path> pathList = new ArrayList<>();
+        try {
+            Vector<ChannelSftp.LsEntry> childFiles = this.path.getChannelSftp().ls(this.path.getStringPath());
+
+            for (ChannelSftp.LsEntry file: childFiles) {
+                if ( !(file.getFilename().equals(".") || file.getFilename().equals(".."))) {
+                    String childPathString = this.path.getStringPath() + this.path.getFileSystem().getSeparator() + file.getFilename();
+                    SftpPath childPath = SftpPath.get(this.path.getFileSystem(), childPathString);
+                    pathList.add(childPath);
+                }
+
+            }
+        } catch (SftpException e) {
+            throw new RuntimeException(e);
+        }
+        return pathList.iterator();
 
     }
 
     @Override
     public void close() throws IOException {
 
-        throw new UnsupportedOperationException();
+        isClosed = true;
 
     }
 }

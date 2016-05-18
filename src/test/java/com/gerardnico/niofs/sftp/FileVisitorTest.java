@@ -19,7 +19,7 @@ public class FileVisitorTest {
     public void visitFile() throws IOException {
 
         FileSystem fileSystem = FileSystemFactory.get();
-        Path start = fileSystem.getPath("/");
+        Path start = fileSystem.getPath(".");
         Files.walkFileTree(start,new SimpleFileVisitor());
         FileSystemFactory.close();
     }

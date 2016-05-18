@@ -48,9 +48,9 @@ class SftpPath implements Path {
     private String[] folders;
 
 
-    private SftpPath(SftpFileSystem sftpFileSystem, String stringPath) {
+    private SftpPath(FileSystem sftpFileSystem, String stringPath) {
 
-        this.sftpFileSystem = sftpFileSystem;
+        this.sftpFileSystem = (SftpFileSystem) sftpFileSystem;
         this.stringPath = stringPath;
         this.PATH_SEPARATOR = sftpFileSystem.getSeparator();
         this.folders = stringPath.split( PATH_SEPARATOR );
@@ -77,7 +77,8 @@ class SftpPath implements Path {
 
     public Path getFileName() {
         // FilenameUtils.getName(this.getPath()
-        throw new UnsupportedOperationException();
+        //throw new UnsupportedOperationException();
+        return this;
     }
 
     public Path getParent() {
@@ -151,7 +152,7 @@ class SftpPath implements Path {
             return this;
         } else {
             try {
-                return get(sftpFileSystem,sftpFileSystem.getChannelSftp().getHome()+sftpFileSystem.getSeparator()+this.stringPath);
+                return get(sftpFileSystem,this.getChannelSftp().getHome()+sftpFileSystem.getSeparator()+this.stringPath);
             } catch (SftpException e) {
                 throw new RuntimeException(e);
             }
@@ -167,7 +168,7 @@ class SftpPath implements Path {
      * @param path
      * @return
      */
-    protected static Path get(SftpFileSystem sftpFileSystem, String path) {
+    protected static SftpPath get(FileSystem sftpFileSystem, String path) {
         return new SftpPath(sftpFileSystem,path);
     }
 

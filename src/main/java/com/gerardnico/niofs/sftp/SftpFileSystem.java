@@ -9,8 +9,7 @@ import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.ArrayList;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -155,7 +154,8 @@ public class SftpFileSystem extends FileSystem {
 
     @Override
     public Set<String> supportedFileAttributeViews() {
-        throw new UnsupportedOperationException();
+        return Collections.unmodifiableSet(
+                new HashSet<>(Arrays.asList("basic", "posix")));
     }
 
     @Override
