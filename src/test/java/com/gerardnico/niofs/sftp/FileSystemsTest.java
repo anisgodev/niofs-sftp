@@ -25,50 +25,17 @@ import static org.junit.Assert.*;
 
 public class FileSystemsTest {
 
-    private static MockSshSftpServer mockSftpServer;
-    private static String user = "user";
-    private static String pwd = "pwd";
-    private static String host = "localhost";
-    private static Integer port = 22999;
-    private static String url = "sftp://" + user + ":" + pwd + "@" + host + ":" + port;
-    private static FileSystemProvider sftpFileSystemProvider;
-    private static SftpFileSystem sftpFileSystem;
-    private static URI uri;
+
+    private static FileSystem sftpFileSystem;
+
 
     // Two tests:
     // For a file and for a directory
     @BeforeClass
-    static public void createResources() throws SftpException, URISyntaxException, IOException {
+    static public void createResources()  {
 
-        // Get the SFTP File System Provider
-        // See http://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html
-        // To know how the file system is loaded
-        for (FileSystemProvider fileSystemProvider : FileSystemProvider.installedProviders()) {
-            if (SftpFileSystemProvider.SFTP_SCHEME.equals(fileSystemProvider.getScheme())) {
-                sftpFileSystemProvider = fileSystemProvider;
-            }
-        }
-        if (sftpFileSystemProvider == null) {
-            // It's installed but yeah a snippet :)
-            throw new ProviderNotFoundException("Unable to get a SFTP file system provider");
-        }
 
-        Map<String, String> environments = System.getenv();
-
-        if (environments.get("NIOFS_SFTP_USER")!=null) {
-            user = environments.get("NIOFS_SFTP_USER");
-            pwd = environments.get("NIOFS_SFTP_PWD")!= null ? environments.get("NIOFS_SFTP_PWD") : pwd ;
-            host = environments.get("NIOFS_SFTP_HOST")!=null ? environments.get("NIOFS_SFTP_HOST"): host ;
-            port = environments.get("NIOFS_SFTP_PORT")!=null ? Integer.valueOf(environments.get("NIOFS_SFTP_PORT")) : port;
-            url = "sftp://" + user + ":" + pwd + "@" + host + ":" + port;
-        } else {
-            // Start the server
-            mockSftpServer = new MockSshSftpServer();
-            mockSftpServer.start();
-        }
-
-        uri = new URI(url);
-        sftpFileSystem = (SftpFileSystem) sftpFileSystemProvider.newFileSystem(uri, null);
+        sftpFileSystem = FileSystemFactory.get();
 
 
     }
@@ -76,20 +43,10 @@ public class FileSystemsTest {
     @AfterClass
     static public void closeResources() throws IOException {
 
-        sftpFileSystem.close();
-        if (mockSftpServer!=null) {
-            mockSftpServer.stop();
-        }
+        FileSystemFactory.close();
 
     }
 
-
-    @Test
-    public void sftpFileSystemProviderIsNotNull() throws Exception {
-
-        assertNotNull(sftpFileSystemProvider);
-
-    }
 
     @Test
     public void sftpFileSystemIsNotNull() throws Exception {
@@ -160,7 +117,9 @@ public class FileSystemsTest {
         expectedPermission.add(PosixFilePermission.OWNER_WRITE);
         expectedPermission.add(PosixFilePermission.OWNER_EXECUTE);
 
-        Files.setPosixFilePermissions(file,expectedPermission);
+        if (!FileSystemFactory.isWindows()) {
+            Files.setPosixFilePermissions(file, expectedPermission);
+        }
 
         // The test can start
         PosixFileAttributes attrs = Files.readAttributes(file, PosixFileAttributes.class);
@@ -175,7 +134,11 @@ public class FileSystemsTest {
         assertEquals("The last modified time is the creation time (Creation time doesn't exist in SFTP", attrs.creationTime(), attrs.lastModifiedTime());
         assertEquals("The last access time is ", lastAccessTimeTxt, attrs.lastAccessTime().toString());
 
-        assertEquals("The permissions are equal", expectedPermission, attrs.permissions());
+        if (!FileSystemFactory.isWindows()) {
+            // Let op on Windows with the MockSsh Sftp Server, this will fail but not on SSH on Linux
+            // Windows unfortunately doesn't support POSIX file systems
+            assertEquals("The permissions are equal", expectedPermission, attrs.permissions());
+        }
 
     }
 

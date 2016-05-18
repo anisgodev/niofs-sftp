@@ -100,7 +100,8 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 
     @Override
     public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
-        throw new UnsupportedOperationException();
+        return new SftpDirectoryStream(toSftpPath(dir),filter);
+
     }
 
     /**
