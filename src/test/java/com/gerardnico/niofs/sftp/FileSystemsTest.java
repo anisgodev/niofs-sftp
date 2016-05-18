@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -52,9 +53,19 @@ public class FileSystemsTest {
             throw new ProviderNotFoundException("Unable to get a SFTP file system provider");
         }
 
-        // Start the server
-        mockSftpServer = new MockSshSftpServer();
-        mockSftpServer.start();
+        Map<String, String> environments = System.getenv();
+
+        if (environments.get("NIOFS_SFTP_USER")!=null) {
+            user = environments.get("NIOFS_SFTP_USER");
+            pwd = environments.get("NIOFS_SFTP_PWD")!= null ? environments.get("NIOFS_SFTP_PWD") : pwd ;
+            host = environments.get("NIOFS_SFTP_HOST")!=null ? environments.get("NIOFS_SFTP_HOST"): host ;
+            port = environments.get("NIOFS_SFTP_PORT")!=null ? Integer.valueOf(environments.get("NIOFS_SFTP_PORT")) : port;
+            url = "sftp://" + user + ":" + pwd + "@" + host + ":" + port;
+        } else {
+            // Start the server
+            mockSftpServer = new MockSshSftpServer();
+            mockSftpServer.start();
+        }
 
         uri = new URI(url);
         sftpFileSystem = (SftpFileSystem) sftpFileSystemProvider.newFileSystem(uri, null);
@@ -66,7 +77,9 @@ public class FileSystemsTest {
     static public void closeResources() throws IOException {
 
         sftpFileSystem.close();
-        mockSftpServer.stop();
+        if (mockSftpServer!=null) {
+            mockSftpServer.stop();
+        }
 
     }
 
@@ -140,9 +153,9 @@ public class FileSystemsTest {
         expectedPermission.add(PosixFilePermission.GROUP_READ);
         expectedPermission.add(PosixFilePermission.GROUP_WRITE);
         expectedPermission.add(PosixFilePermission.GROUP_EXECUTE);
-        expectedPermission.add(PosixFilePermission.OTHERS_READ);
-        expectedPermission.add(PosixFilePermission.OTHERS_WRITE);
-        expectedPermission.add(PosixFilePermission.OTHERS_EXECUTE);
+        //expectedPermission.add(PosixFilePermission.OTHERS_READ);
+        //expectedPermission.add(PosixFilePermission.OTHERS_WRITE);
+        //expectedPermission.add(PosixFilePermission.OTHERS_EXECUTE);
         expectedPermission.add(PosixFilePermission.OWNER_READ);
         expectedPermission.add(PosixFilePermission.OWNER_WRITE);
         expectedPermission.add(PosixFilePermission.OWNER_EXECUTE);

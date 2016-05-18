@@ -114,10 +114,10 @@ public class SftpPosixFileAttributeView implements PosixFileAttributeView {
         permissions += textToDigitMap.get(String.valueOf(ownerPerm))*100;
         permissions += textToDigitMap.get(String.valueOf(groupPerm))*10;
         permissions += textToDigitMap.get(String.valueOf(otherPerm))*1;
-
+        int permissionOctal = Integer.parseInt(String.valueOf(permissions),8); // Data must be in octal !
         // Set the permission
         try {
-            this.path.getChannelSftp().chmod(permissions,this.path.getStringPath());
+            this.path.getChannelSftp().chmod(permissionOctal,this.path.getStringPath());
         } catch (SftpException e) {
             throw new RuntimeException(e);
         }
