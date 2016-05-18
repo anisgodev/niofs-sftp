@@ -45,9 +45,10 @@ public class SftpPosixFileAttributes extends SftpBasicFileAttributes implements 
         String permissionString = this.attrs.getPermissionsString();
         Set<PosixFilePermission> permissions = new HashSet<PosixFilePermission>();
         char nothing = "-".charAt(0);
+        // We skip the first character as it's the file type
         for (int i=1; i< permissionString.length();i++) {
             if (permissionString.charAt(i) != nothing) {
-                permissions.add(listPermissions.get(i));
+                permissions.add(listPermissions.get(i-1));
             }
         }
 

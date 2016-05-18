@@ -11,10 +11,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.*;
-import java.nio.file.attribute.FileTime;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.nio.file.attribute.UserDefinedFileAttributeView;
+import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -139,19 +136,21 @@ public class FileSystemsTest {
         // As they depends of the process permission when the file is created
         // We set them first
         Set<PosixFilePermission> expectedPermission = new HashSet<java.nio.file.attribute.PosixFilePermission>();
+
+        expectedPermission.add(PosixFilePermission.GROUP_READ);
+        expectedPermission.add(PosixFilePermission.GROUP_WRITE);
         expectedPermission.add(PosixFilePermission.GROUP_EXECUTE);
         expectedPermission.add(PosixFilePermission.OTHERS_READ);
         expectedPermission.add(PosixFilePermission.OTHERS_WRITE);
-        expectedPermission.add(PosixFilePermission.OWNER_READ);
         expectedPermission.add(PosixFilePermission.OTHERS_EXECUTE);
-        expectedPermission.add(PosixFilePermission.GROUP_WRITE);
+        expectedPermission.add(PosixFilePermission.OWNER_READ);
         expectedPermission.add(PosixFilePermission.OWNER_WRITE);
         expectedPermission.add(PosixFilePermission.OWNER_EXECUTE);
-        expectedPermission.add(PosixFilePermission.GROUP_READ);
+
         Files.setPosixFilePermissions(file,expectedPermission);
 
         // The test can start
-        SftpPosixFileAttributes attrs = Files.readAttributes(file, SftpPosixFileAttributes.class);
+        PosixFileAttributes attrs = Files.readAttributes(file, PosixFileAttributes.class);
         assertNotNull("The file exist, we must get attributes", attrs);
         assertFalse("This is not a directory", attrs.isDirectory());
         assertTrue("This is a regular file", attrs.isRegularFile());

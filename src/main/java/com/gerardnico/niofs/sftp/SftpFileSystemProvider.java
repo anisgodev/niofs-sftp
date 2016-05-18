@@ -226,7 +226,7 @@ public class SftpFileSystemProvider extends FileSystemProvider {
     @Override
     public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
 
-        if (type == BasicFileAttributes.class || type == SftpBasicFileAttributes.class || type == SftpPosixFileAttributes.class)
+        if (type == BasicFileAttributes.class || type == SftpBasicFileAttributes.class || type == PosixFileAttributes.class || type == SftpPosixFileAttributes.class)
             return (A) toSftpPath(path).getFileAttributes();
         else {
             throw new UnsupportedOperationException("The class (" + type + ") is not supported.");
