@@ -103,6 +103,7 @@ public class SftpFileSystem extends FileSystem {
     public void close() throws IOException {
         this.channelSftp.disconnect();
         this.session.disconnect();
+        this.sftpFileSystemProvider.removeFileSystem(this.uri);
     }
 
     /**

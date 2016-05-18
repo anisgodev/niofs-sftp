@@ -80,6 +80,17 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 
     }
 
+    /**
+     * When the {@link SftpFileSystem#close() file System close}, the file system must be deleted from the pool
+     * @param uri
+     * @return
+     */
+    protected FileSystem removeFileSystem(URI uri) {
+
+        return fileSystemPool.remove(uri);
+
+    }
+
     @Override
     public Path getPath(URI uri) {
 
@@ -282,4 +293,6 @@ public class SftpFileSystemProvider extends FileSystemProvider {
             throw new ProviderMismatchException();
         return (SftpPath) path;
     }
+
+
 }
