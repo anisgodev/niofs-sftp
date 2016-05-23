@@ -8,9 +8,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 /**
  * Created by gerard on 18-05-2016.
- * A visitor
+ * A visitor for the test {@link FileVisitorTest}
  */
-public class SimpleFileVisitor implements FileVisitor<Path> {
+public class FileVisitorSimple implements FileVisitor<Path> {
 
     @Override
     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {

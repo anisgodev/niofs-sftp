@@ -50,7 +50,7 @@ public class SftpDirectoryStream implements DirectoryStream<Path> {
             for (ChannelSftp.LsEntry file: childFiles) {
                 if ( !(file.getFilename().equals(".") || file.getFilename().equals(".."))) {
                     String childPathString = this.path.getStringPath() + this.path.getFileSystem().getSeparator() + file.getFilename();
-                    SftpPath childPath = SftpPath.get(this.path.getFileSystem(), childPathString);
+                    Path childPath = SftpPath.get(this.path.getFileSystem(), childPathString);
                     pathList.add(childPath);
                 }
 

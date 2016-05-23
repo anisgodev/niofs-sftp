@@ -22,6 +22,10 @@ public class SftpFileSystem extends FileSystem {
 
     private static final Logger LOGGER = Logger.getLogger(Thread.currentThread().getStackTrace()[0].getClassName());
 
+    // Parameters
+    // Set the working directory
+    public static final String WORKING_DIRECTORY = "working.directory";
+
 
     private final URI uri;
 
@@ -55,6 +59,8 @@ public class SftpFileSystem extends FileSystem {
         String user = userInfo.substring(0, userInfo.indexOf(":"));
         String password = userInfo.substring(userInfo.indexOf(":")+1, userInfo.length());
 
+        // No need to get the path of the URI here
+
         // Port
         int port;
         if (this.uri.getPort()==-1) {
@@ -65,7 +71,7 @@ public class SftpFileSystem extends FileSystem {
 
         try {
 
-            LOGGER.info("Trying to connect to the sftp connection (Uri: " + uri + "' )");
+            LOGGER.info("Trying to connect to the sftp connection (Uri: sftp://" + user + "@"+uri.getHost()+":"+port+"' )");
             JSch jsch = new JSch();
 
             // SSH Session
@@ -79,6 +85,16 @@ public class SftpFileSystem extends FileSystem {
             // Channel used (sftp, exec ....
             this.channelSftp = (ChannelSftp) session.openChannel("sftp");
             this.channelSftp.connect();
+
+            // Environment parameters
+            if (sftpFileSystemBuilder.env !=null) {
+                String workingDirectory = sftpFileSystemBuilder.env.get(WORKING_DIRECTORY);
+                if (workingDirectory.charAt(0) != '/') {
+                    throw new IllegalArgumentException("Working directory should be absolute. The value ("+workingDirectory+") of the environment parameters ("+WORKING_DIRECTORY+") does not begin with a /");
+                } else {
+                    this.channelSftp.cd(workingDirectory);
+                }
+            }
 
 
         } catch (Exception e) {
@@ -135,7 +151,7 @@ public class SftpFileSystem extends FileSystem {
     @Override
     public String getSeparator() {
 
-        return "/";
+        return SftpPath.PATH_SEPARATOR;
     }
 
     @Override
@@ -161,23 +177,8 @@ public class SftpFileSystem extends FileSystem {
 
     @Override
     public Path getPath(String first, String... more) {
-        String path;
-        if (more.length == 0) {
-            path = first;
-        } else {
-            // Build the path from the list of directory
-            StringBuilder sb = new StringBuilder();
-            sb.append(first);
-            for (String segment : more) {
-                if (segment.length() > 0) {
-                    if (sb.length() > 0)
-                        sb.append('/');
-                    sb.append(segment);
-                }
-            }
-            path = sb.toString();
-        }
-        return SftpPath.get(this,path);
+
+        return SftpPath.get(this,first, more);
     }
 
     @Override
@@ -199,6 +200,7 @@ public class SftpFileSystem extends FileSystem {
 
         private final SftpFileSystemProvider sftpFileSystemProvider;
         private final URI uri;
+        private Map<String, String> env;
 
         public SftpFileSystemBuilder(SftpFileSystemProvider sftpFileSystemProvider, URI uri) {
             this.sftpFileSystemProvider = sftpFileSystemProvider;
@@ -210,5 +212,9 @@ public class SftpFileSystem extends FileSystem {
             return new SftpFileSystem(this);
         }
 
+        public SftpFileSystemBuilder environmentParameters(Map<String, String> env) {
+            this.env = env;
+            return this;
+        }
     }
 }

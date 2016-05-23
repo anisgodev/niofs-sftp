@@ -1,3 +1,4 @@
+
 package com.gerardnico.niofs.sftp;
 
 import org.junit.AfterClass;
@@ -5,14 +6,20 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.junit.Assert.*;
+
 
 /**
- * Created by gerard on 18-05-2016.
+ * Test the factory {@link TestFileSystem}
  */
-public class FileVisitorTest {
+
+public class TestFileSystemTest {
 
 
     private static FileSystem sftpFileSystem;
@@ -36,12 +43,21 @@ public class FileVisitorTest {
 
     }
 
-    @Test
-    public void visitFile() throws IOException {
 
-        Path start = sftpFileSystem.getPath(".");
-        Files.walkFileTree(start,new FileVisitorSimple());
+    @Test
+    public void sftpFileSystemIsNotNull() throws Exception {
+
+        assertNotNull(sftpFileSystem);
 
     }
+
+    @Test
+    public void sftpFileSystemIsOpen() throws Exception {
+
+        assertEquals("The File System must be opened", true, sftpFileSystem.isOpen());
+
+    }
+
+
 
 }

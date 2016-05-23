@@ -42,8 +42,10 @@ class SftpPath implements Path {
 
 
     protected static final String ROOT_PREFIX = "/";
-    protected final String PATH_SEPARATOR; // To avoid duplicate. It is initialized with the value of FileSystem.getSeparator();
+    protected static final String PATH_SEPARATOR = "/";
+
     private final SftpFileSystem sftpFileSystem;
+    private final boolean isAbsolute;
     private String stringPath;
     private String[] folders;
 
@@ -52,7 +54,13 @@ class SftpPath implements Path {
 
         this.sftpFileSystem = (SftpFileSystem) sftpFileSystem;
         this.stringPath = stringPath;
-        this.PATH_SEPARATOR = sftpFileSystem.getSeparator();
+
+        if (this.stringPath.startsWith(ROOT_PREFIX)) {
+            isAbsolute =  true;
+        } else {
+            isAbsolute =  false;
+        }
+
         this.folders = stringPath.split( PATH_SEPARATOR );
 
     }
@@ -63,11 +71,8 @@ class SftpPath implements Path {
     }
 
     public boolean isAbsolute() {
-        if (this.stringPath.startsWith(ROOT_PREFIX)) {
-            return true;
-        } else {
-            return false;
-        }
+
+        return isAbsolute;
 
     }
 
@@ -161,16 +166,7 @@ class SftpPath implements Path {
 
     }
 
-    /**
-     * A static constructor
-     * You canm also get a stringPath from a provider with an URI.
-     * @param sftpFileSystem
-     * @param path
-     * @return
-     */
-    protected static SftpPath get(FileSystem sftpFileSystem, String path) {
-        return new SftpPath(sftpFileSystem,path);
-    }
+
 
     public Path toRealPath(LinkOption... options) throws IOException {
         throw new UnsupportedOperationException();
@@ -201,7 +197,20 @@ class SftpPath implements Path {
     }
 
     public String toString() {
-        return this.stringPath;
+        if (isAbsolute) {
+            return this.stringPath;
+        } else {
+            try {
+                // Ask for the current working directory
+                if (this.stringPath.trim().equals("")) {
+                    return this.getChannelSftp().pwd();
+                } else {
+                    return this.getChannelSftp().pwd() + PATH_SEPARATOR + this.stringPath;
+                }
+            } catch (SftpException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /**
@@ -237,5 +246,36 @@ class SftpPath implements Path {
                 }
             }
         }
+    }
+
+    public static Path get(FileSystem fileSystem, String first, String[] more) {
+        String path;
+        if (more == null) {
+            path = first;
+        } else {
+            // Build the path from the list of directory
+            StringBuilder sb = new StringBuilder();
+            sb.append(first);
+            for (String segment : more) {
+                if (segment.length() > 0) {
+                    if (sb.length() > 0)
+                        sb.append(PATH_SEPARATOR);
+                    sb.append(segment);
+                }
+            }
+            path = sb.toString();
+        }
+        return new SftpPath(fileSystem,path);
+    }
+
+    /**
+     * A static constructor
+     * You can also get a stringPath from a provider with an URI.
+     * @param sftpFileSystem
+     * @param path
+     * @return
+     */
+    protected static Path get(FileSystem sftpFileSystem, String path) {
+        return get(sftpFileSystem, path, null);
     }
 }

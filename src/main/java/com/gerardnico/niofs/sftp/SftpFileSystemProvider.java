@@ -38,6 +38,7 @@ public class SftpFileSystemProvider extends FileSystemProvider {
 
         // Build a Sftp File System object
         SftpFileSystem sftpFileSystem = new SftpFileSystem.SftpFileSystemBuilder(this, uri)
+                .environmentParameters((Map<String, String>) env)
                 .build();
 
         // Add the file system in the pool

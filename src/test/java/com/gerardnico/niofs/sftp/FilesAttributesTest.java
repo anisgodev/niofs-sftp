@@ -1,41 +1,40 @@
-
 package com.gerardnico.niofs.sftp;
 
-import com.jcraft.jsch.SftpException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.nio.file.spi.FileSystemProvider;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-
-public class FileSystemsTest {
-
+/**
+ * Created by gerard on 23-05-2016.
+ */
+public class FilesAttributesTest {
 
     private static FileSystem sftpFileSystem;
+    private static TestFileSystem testFileSystem;
 
 
-    // Two tests:
-    // For a file and for a directory
     @BeforeClass
     static public void createResources()  {
 
 
-        sftpFileSystem = FileSystemFactory.get();
+        testFileSystem = new TestFileSystem.TestFileSystemBuilder()
+                .useWorkingDirectory(false)
+                .build();
+        sftpFileSystem = testFileSystem.get();
 
 
     }
@@ -43,45 +42,14 @@ public class FileSystemsTest {
     @AfterClass
     static public void closeResources() throws IOException {
 
-        FileSystemFactory.close();
-
-    }
-
-
-    @Test
-    public void sftpFileSystemIsNotNull() throws Exception {
-
-        assertNotNull(sftpFileSystem);
-
-    }
-
-    @Test
-    public void sftpFileSystemIsOpen() throws Exception {
-
-        assertEquals("The File System must be opened", true, sftpFileSystem.isOpen());
-
-    }
-
-    @Test
-    public void sftpFilesCopyFromLocalToSftpMoveIn() throws IOException {
-
-        Path src = Paths.get("./README.md");
-        Path dst = sftpFileSystem.getPath("src", "test", "resources", "sftp", "README.md");
-        Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING);
-//        assertFalse("Files doesn't exist",Files.exists(dst));
-    }
-
-    @Test
-    public void sftpFilesCreateFileTest() throws IOException {
-
-        Path dst = sftpFileSystem.getPath("target", "CreateFileTest.txt");
-        Files.createFile(dst);
+        testFileSystem.close();
 
     }
 
 
     @Test
     public void posixFileAttribute() throws IOException {
+
         Path file = sftpFileSystem.getPath("src", "test", "resources", "sftp", "testFileRead.txt");
 
         // Modified Time
@@ -105,7 +73,7 @@ public class FileSystemsTest {
         // The default permission may be not the same
         // As they depends of the process permission when the file is created
         // We set them first
-        Set<PosixFilePermission> expectedPermission = new HashSet<java.nio.file.attribute.PosixFilePermission>();
+        Set<PosixFilePermission> expectedPermission = new HashSet<PosixFilePermission>();
 
         expectedPermission.add(PosixFilePermission.GROUP_READ);
         expectedPermission.add(PosixFilePermission.GROUP_WRITE);
@@ -117,7 +85,7 @@ public class FileSystemsTest {
         expectedPermission.add(PosixFilePermission.OWNER_WRITE);
         expectedPermission.add(PosixFilePermission.OWNER_EXECUTE);
 
-        if (!FileSystemFactory.isWindows()) {
+        if (!testFileSystem.isWindows()) {
             Files.setPosixFilePermissions(file, expectedPermission);
         }
 
@@ -134,12 +102,11 @@ public class FileSystemsTest {
         assertEquals("The last modified time is the creation time (Creation time doesn't exist in SFTP", attrs.creationTime(), attrs.lastModifiedTime());
         assertEquals("The last access time is ", lastAccessTimeTxt, attrs.lastAccessTime().toString());
 
-        if (!FileSystemFactory.isWindows()) {
+        if (!testFileSystem.isWindows()) {
             // Let op on Windows with the MockSsh Sftp Server, this will fail but not on SSH on Linux
             // Windows unfortunately doesn't support POSIX file systems
             assertEquals("The permissions are equal", expectedPermission, attrs.permissions());
         }
 
     }
-
 }
