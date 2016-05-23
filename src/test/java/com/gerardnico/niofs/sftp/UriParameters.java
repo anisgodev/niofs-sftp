@@ -1,5 +1,6 @@
 package com.gerardnico.niofs.sftp;
 
+import java.nio.file.Paths;
 import java.util.Map;
 
 /**
@@ -29,6 +30,8 @@ public class UriParameters {
             // and therefore we need to known the home user directory before making a connection.
             HOME_USER_DIR = environments.get("NIOFS_SFTP_HOME_USER_DIR") != null ? environments.get("NIOFS_SFTP_HOME_USER_DIR") : "/home/gerardni-niosftp/";
             URL = "sftp://" + USER + ":" + PWD + "@" + HOST + ":" + PORT;
+        } else {
+            HOME_USER_DIR = Paths.get("").toString();
         }
     }
 
