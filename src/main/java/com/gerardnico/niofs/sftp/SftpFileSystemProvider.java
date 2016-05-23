@@ -23,7 +23,7 @@ public class SftpFileSystemProvider extends FileSystemProvider {
     static final String SFTP_SCHEME = "sftp";
 
     // The pool of Sftp Connection
-    private static final Map<URI, SftpFileSystem> fileSystemPool = new HashMap<URI, SftpFileSystem>();
+    private static final Map<String, SftpFileSystem> fileSystemPool = new HashMap<>();
 
     @Override
     public String getScheme() {
@@ -36,22 +36,26 @@ public class SftpFileSystemProvider extends FileSystemProvider {
     @Override
     public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
 
-        // Build a Sftp File System object
-        SftpFileSystem sftpFileSystem = new SftpFileSystem.SftpFileSystemBuilder(this, uri)
-                .environmentParameters((Map<String, String>) env)
-                .build();
-
-        // Add the file system in the pool
-        if (fileSystemPool.containsKey(uri)) {
-            throw new FileSystemAlreadyExistsException();
+        String key = toFileSystemId(uri, env);
+        if (fileSystemPool.containsKey(key)) {
+            return fileSystemPool.get(key);
         } else {
-            fileSystemPool.put(uri, sftpFileSystem);
+            // Build a Sftp File System object
+            SftpFileSystem sftpFileSystem = new SftpFileSystem.SftpFileSystemBuilder(this, uri)
+                    .environmentParameters((Map<String, String>) env)
+                    .build();
+
+            // Add the file system in the pool
+            fileSystemPool.put(toFileSystemId(uri,env), sftpFileSystem);
+
+            // Return it
+            return sftpFileSystem;
+
         }
 
-        // Return it
-        return sftpFileSystem;
-
     }
+
+
 
     /**
      * @param path
@@ -77,7 +81,36 @@ public class SftpFileSystemProvider extends FileSystemProvider {
     @Override
     public FileSystem getFileSystem(URI uri) {
 
-        return fileSystemPool.get(uri);
+        FileSystem sftpFileSystem = fileSystemPool.get(toFileSystemId(uri));
+        if (sftpFileSystem == null) {
+            try {
+                sftpFileSystem = newFileSystem(uri,null);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return sftpFileSystem;
+
+    }
+
+    /**
+     * To construct an ID of the file System from the URI
+     * to support the function {@link #getFileSystem(URI)}
+     * @param uri
+     * @return
+     */
+    private String toFileSystemId(URI uri) {
+        return toFileSystemId(uri, null);
+    }
+
+    private String toFileSystemId(URI uri, Map<String, ?> env) {
+        String id = uri.getUserInfo()+uri.getHost()+uri.getPort();
+        if (env !=null) {
+           if (env.get(SftpFileSystem.KEY_WORKING_DIRECTORY) != null) {
+               id += env.get(SftpFileSystem.KEY_WORKING_DIRECTORY);
+           }
+        }
+        return id;
 
     }
 
@@ -88,14 +121,15 @@ public class SftpFileSystemProvider extends FileSystemProvider {
      */
     protected FileSystem removeFileSystem(URI uri) {
 
-        return fileSystemPool.remove(uri);
+        return fileSystemPool.remove(toFileSystemId(uri));
 
     }
 
     @Override
     public Path getPath(URI uri) {
 
-        return getFileSystem(uri).getPath(uri.getPath());
+        String path = uri.getPath();
+        return getFileSystem(uri).getPath(path);
 
     }
 

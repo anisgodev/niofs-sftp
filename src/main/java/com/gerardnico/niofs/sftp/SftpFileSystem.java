@@ -24,7 +24,7 @@ public class SftpFileSystem extends FileSystem {
 
     // Parameters
     // Set the working directory
-    public static final String WORKING_DIRECTORY = "working.directory";
+    public static final String KEY_WORKING_DIRECTORY = "working.directory";
 
 
     private final URI uri;
@@ -88,9 +88,9 @@ public class SftpFileSystem extends FileSystem {
 
             // Environment parameters
             if (sftpFileSystemBuilder.env !=null) {
-                String workingDirectory = sftpFileSystemBuilder.env.get(WORKING_DIRECTORY);
+                String workingDirectory = sftpFileSystemBuilder.env.get(KEY_WORKING_DIRECTORY);
                 if (workingDirectory.charAt(0) != '/') {
-                    throw new IllegalArgumentException("Working directory should be absolute. The value ("+workingDirectory+") of the environment parameters ("+WORKING_DIRECTORY+") does not begin with a /");
+                    throw new IllegalArgumentException("Working directory should be absolute. The value ("+workingDirectory+") of the environment parameters ("+ KEY_WORKING_DIRECTORY +") does not begin with a /");
                 } else {
                     this.channelSftp.cd(workingDirectory);
                 }
