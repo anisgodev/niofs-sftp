@@ -1,10 +1,12 @@
 package com.gerardnico.niofs.sftp;
 
-import com.sun.jndi.toolkit.url.Uri;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,12 +21,34 @@ import static org.junit.Assert.assertEquals;
 public class PathsTest {
 
 
+    private static FileSystem sftpFileSystem;
+    private static TestFileSystem testFileSystem;
+
+
+    @BeforeClass
+    static public void createResources()  {
+
+
+        testFileSystem = new TestFileSystem.TestFileSystemBuilder().build();
+        sftpFileSystem = testFileSystem.get();
+
+    }
+
+    @AfterClass
+    static public void closeResources() throws IOException {
+
+        testFileSystem.close();
+
+    }
+
     @Test
     public void get() throws IOException {
 
-        String url = UriParameters.URL+UriParameters.HOME_USER_DIR+"/src/test/resources/sftp/README.md";
+        // The url must be absolute
+        String url = TestFileSystemParameters.URL+ TestFileSystemParameters.HOME_USER_DIR+"/src/test/resources/sftp/README.md";
         Path path = Paths.get(URI.create(url));
         assertEquals("The file ("+url+") must exist",true, Files.exists(path));
+        path.getFileSystem().close();
 
 
     }

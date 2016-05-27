@@ -26,10 +26,14 @@ public class SftpFileSystem extends FileSystem {
     // Set the working directory
     public static final String KEY_WORKING_DIRECTORY = "working.directory";
 
+    private ChannelSftp channelSftp;
 
     private final URI uri;
 
-    private final Session session;
+
+    private final SftpFileSystemBuilder sftpFileSystemBuilder;
+
+    private Session session;
 
     /**
      * Is used in the system file provider
@@ -37,11 +41,72 @@ public class SftpFileSystem extends FileSystem {
      * @return ChannelSftp
      */
     protected ChannelSftp getChannelSftp() {
+
+        if (channelSftp == null) {
+
+            // Extract the user and the password
+            String userInfo = this.uri.getUserInfo();
+            String user = userInfo.substring(0, userInfo.indexOf(":"));
+            String password = userInfo.substring(userInfo.indexOf(":") + 1, userInfo.length());
+
+            // No need to get the path of the URI here
+
+            // Port
+            int port;
+            if (this.uri.getPort()==-1) {
+                port = 22;
+            }  else {
+                port = this.uri.getPort();
+            }
+
+            // Host
+            String host;
+            if (uri.getHost()!=null) {
+                host = uri.getHost();
+            } else {
+                host = "localhost";
+            }
+
+            try {
+
+                LOGGER.info("Trying to connect to the sftp connection (Uri: sftp://" + user + "@" + host + ":" + port + "' )");
+                JSch jsch = new JSch();
+
+                // SSH Session
+                this.session = jsch.getSession(user, host, port);
+                session.setPassword(password);
+                java.util.Properties config = new java.util.Properties();
+                config.put("StrictHostKeyChecking", "no");
+                session.setConfig(config);
+                session.connect();
+
+                // Channel used (sftp, exec ....
+                this.channelSftp = (ChannelSftp) session.openChannel("sftp");
+                this.channelSftp.connect();
+
+                // Environment parameters
+                if (sftpFileSystemBuilder.env != null) {
+                    String workingDirectory = sftpFileSystemBuilder.env.get(KEY_WORKING_DIRECTORY);
+                    if (workingDirectory.charAt(0) != '/') {
+                        throw new IllegalArgumentException("Working directory should be absolute. The value (" + workingDirectory + ") of the environment parameters (" + KEY_WORKING_DIRECTORY + ") does not begin with a /");
+                    } else {
+                        this.channelSftp.cd(workingDirectory);
+                    }
+                }
+
+
+            } catch (Exception e) {
+
+                throw new RuntimeException(e);
+
+            }
+        }
+
         return channelSftp;
     }
 
-    private final ChannelSftp channelSftp;
-    private final SftpFileSystemProvider sftpFileSystemProvider;
+
+
 
     /**
      * A file system is open upon creation
@@ -52,63 +117,16 @@ public class SftpFileSystem extends FileSystem {
 
         // Uri
         this.uri = sftpFileSystemBuilder.uri;
-        this.sftpFileSystemProvider = sftpFileSystemBuilder.sftpFileSystemProvider;
-
-        // Extract the user and the password
-        String userInfo = this.uri.getUserInfo();
-        String user = userInfo.substring(0, userInfo.indexOf(":"));
-        String password = userInfo.substring(userInfo.indexOf(":")+1, userInfo.length());
-
-        // No need to get the path of the URI here
-
-        // Port
-        int port;
-        if (this.uri.getPort()==-1) {
-            port = 22;
-        }  else {
-            port = this.uri.getPort();
-        }
-
-        try {
-
-            LOGGER.info("Trying to connect to the sftp connection (Uri: sftp://" + user + "@"+uri.getHost()+":"+port+"' )");
-            JSch jsch = new JSch();
-
-            // SSH Session
-            this.session = jsch.getSession(user, uri.getHost(), port);
-            session.setPassword(password);
-            java.util.Properties config = new java.util.Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
-            session.connect();
-
-            // Channel used (sftp, exec ....
-            this.channelSftp = (ChannelSftp) session.openChannel("sftp");
-            this.channelSftp.connect();
-
-            // Environment parameters
-            if (sftpFileSystemBuilder.env !=null) {
-                String workingDirectory = sftpFileSystemBuilder.env.get(KEY_WORKING_DIRECTORY);
-                if (workingDirectory.charAt(0) != '/') {
-                    throw new IllegalArgumentException("Working directory should be absolute. The value ("+workingDirectory+") of the environment parameters ("+ KEY_WORKING_DIRECTORY +") does not begin with a /");
-                } else {
-                    this.channelSftp.cd(workingDirectory);
-                }
-            }
+        this.sftpFileSystemBuilder = sftpFileSystemBuilder;
 
 
-        } catch (Exception e) {
-
-            throw new RuntimeException(e);
-
-        }
 
     }
 
     @Override
     public FileSystemProvider provider() {
 
-        return this.sftpFileSystemProvider;
+        return sftpFileSystemBuilder.sftpFileSystemProvider;
     }
 
     /**
@@ -117,9 +135,14 @@ public class SftpFileSystem extends FileSystem {
      */
     @Override
     public void close() throws IOException {
-        this.channelSftp.disconnect();
-        this.session.disconnect();
-        this.sftpFileSystemProvider.removeFileSystem(this.uri);
+        if ( this.channelSftp !=null) {
+            this.channelSftp.disconnect();
+        }
+        if (this.session!= null) {
+            this.session.disconnect();
+        }
+        //TODO: The filesystem pool must be in the sftpFileSystem class and not in the provider
+        this.sftpFileSystemBuilder.sftpFileSystemProvider.removeFileSystem(this.uri);
     }
 
     /**
@@ -128,7 +151,12 @@ public class SftpFileSystem extends FileSystem {
     @Override
     public boolean isOpen() {
 
-        return !this.channelSftp.isClosed();
+        if (this.channelSftp==null){
+            return true;
+        } else {
+            return !this.channelSftp.isClosed();
+        }
+
     }
 
     /**
@@ -152,6 +180,7 @@ public class SftpFileSystem extends FileSystem {
     public String getSeparator() {
 
         return SftpPath.PATH_SEPARATOR;
+
     }
 
     @Override
@@ -179,6 +208,7 @@ public class SftpFileSystem extends FileSystem {
     public Path getPath(String first, String... more) {
 
         return SftpPath.get(this,first, more);
+
     }
 
     @Override

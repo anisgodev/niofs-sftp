@@ -11,15 +11,10 @@ import java.util.Map;
 /**
  * Created by gerard on 18-05-2016.
  *
- * Create a file system for the test.
+ * Start the sftp mock server if the {@link TestFileSystemParameters}
+ *   * NIOFS_SFTP_HOST = localhost
+ *   * NIOFS_SFTP_PORT = 2999
  *
- * Return the sftp mock server or a ssh connection if the NIOFS_SFTP_USER environment parameters is set.
- * Other environment parameters can be set:
- *   * NIOFS_SFTP_USER
- *   * NIOFS_SFTP_PWD
- *   * NIOFS_SFTP_HOST
- *   * NIOFS_SFTP_PORT
- *   * NIOFS_SFTP_WORKING_DIR (Use only when
  */
 public class TestFileSystem {
 
@@ -52,7 +47,7 @@ public class TestFileSystem {
             }
 
 
-            if (UriParameters.HOST.equals("localhost") && UriParameters.PORT == 22999 ) {
+            if (TestFileSystemParameters.HOST.equals("localhost") && TestFileSystemParameters.PORT == 22999 ) {
                 // Start the server
                 mockSftpServer = new MockSshSftpServer();
                 mockSftpServer.start();
@@ -61,11 +56,11 @@ public class TestFileSystem {
 
             try {
                 Map<String, String> env = null;
-                if (UriParameters.WORKING_DIR != null && testFileSystemBuilder.useWorkingDirectory) {
+                if (TestFileSystemParameters.WORKING_DIR != null && testFileSystemBuilder.useWorkingDirectory) {
                     env = new HashMap<>();
-                    env.put(SftpFileSystem.KEY_WORKING_DIRECTORY,UriParameters.WORKING_DIR);
+                    env.put(SftpFileSystem.KEY_WORKING_DIRECTORY, TestFileSystemParameters.WORKING_DIR);
                 }
-                sftpFileSystem = sftpFileSystemProvider.newFileSystem(URI.create(UriParameters.URL), env);
+                sftpFileSystem = sftpFileSystemProvider.newFileSystem(URI.create(TestFileSystemParameters.URL), env);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

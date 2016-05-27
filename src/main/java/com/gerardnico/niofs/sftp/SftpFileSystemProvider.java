@@ -89,6 +89,7 @@ public class SftpFileSystemProvider extends FileSystemProvider {
                 throw new RuntimeException(e);
             }
         }
+        assert  sftpFileSystem != null;
         return sftpFileSystem;
 
     }
@@ -104,7 +105,22 @@ public class SftpFileSystemProvider extends FileSystemProvider {
     }
 
     private String toFileSystemId(URI uri, Map<String, ?> env) {
-        String id = uri.getUserInfo()+uri.getHost()+uri.getPort();
+
+        String id = null;
+        if (uri.getUserInfo() != null) {
+            id = uri.getUserInfo();
+        }
+        if (uri.getHost()!=null) {
+            id += uri.getHost();
+        } else {
+            id += "localhost";
+        }
+        if (uri.getPort() != -1) {
+            id += uri.getPort();
+        } else {
+            id += "22";
+        }
+
         if (env !=null) {
            if (env.get(SftpFileSystem.KEY_WORKING_DIRECTORY) != null) {
                id += env.get(SftpFileSystem.KEY_WORKING_DIRECTORY);

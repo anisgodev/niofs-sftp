@@ -7,16 +7,23 @@ import java.util.Map;
  * Created by gerard on 23-05-2016.
  * The URI parameters for the test
  * They are fixed in the class but can be changed through environment parameters
+ *
+ *   * NIOFS_SFTP_USER
+ *   * NIOFS_SFTP_PWD
+ *   * NIOFS_SFTP_HOST
+ *   * NIOFS_SFTP_PORT
+ *   * NIOFS_SFTP_WORKING_DIR
+ *   * NIOFS_SFTP_HOME_USER_DIR
  */
-public class UriParameters {
+public class TestFileSystemParameters {
 
     protected static String USER = "user";
     protected static String PWD = "pwd";
     protected static String HOST = "localhost";
-    protected static Integer PORT = 22999;
+    protected static Integer PORT = MockSshSftpServer.PORT;
     protected static String WORKING_DIR = null;
     protected static String HOME_USER_DIR = null;
-    protected static String URL = "sftp://" + UriParameters.USER + ":" + UriParameters.PWD + "@" + UriParameters.HOST + ":" + UriParameters.PORT;
+    protected static String URL = "sftp://" + TestFileSystemParameters.USER + ":" + TestFileSystemParameters.PWD + "@" + TestFileSystemParameters.HOST + ":" + TestFileSystemParameters.PORT;
 
     static {
         Map<String, String> environments = System.getenv();

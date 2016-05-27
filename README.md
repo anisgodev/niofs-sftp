@@ -5,27 +5,43 @@
 Provides access to the files on an SFTP server (that is, an SSH or SCP server).
  
 
-## Get an absolute path with a full URI Format
+## Get an absolute path with a absolute URI Format
+
+The below URI is absolute because it specifies a scheme:
 
     sftp://[ username[: password]@] hostname[: port][ path ]
 
 where:
 
   * User and password must be [encoded](https://en.wikipedia.org/wiki/Percent-encoding) as it's an URI format. 
-  * Path is always absolute. See  The path of a hierarchical URI that specifies an authority is always absolute. See [java.net.URI](http://docs.oracle.com/javase/8/docs/api/java/net/URI.html)
+  * Path is always absolute with a scheme. It must then begin with a `/`
 
 With [Paths](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Paths.html)
 
 ```java
-Path myPath = Paths.get("sftp://myusername:mypassword@somehost:2222/tmp";
+URI uri = URI.create("sftp://myusername:mypassword@somehost:2222/tmp");
+Path myPath = Paths.get(uri);
+
+// And don't forget to close the file system when you don't need it anymore
+myPath.getFileSystem().close();
 ```
 
-Generally, the path in this form is an absolute path but if the path is relative, it will be relative to the user home directory.
+The id of a sftp file system is the combination of user, host, port and working directory. Then if you need a second file from the same file system, you can omit the password.
+Example:
+```java
+URI uri = URI.create("sftp://myusername@somehost:2222/my/Other/Absolute/Path");
+Path mySecondPath = Paths.get(uri);
+```
+You can also just ask the file system from the first path `myPath` and then create a new path (even a relative one). 
+Example:
+```java
+Path mySecondPath = myPath.getFileSystem().getPath("myRelativePath");
+```
 
 ## Get a relative path from a Working Directory
 
 During the instantiation of the file system, you can set the [working directory](http://gerardnico.com/wiki/file_system/working_directory). 
-When not define, the working directory default normally to the user's home directory.
+When not defined, the working directory default normally to the user's home directory.
 
 ```java
 
