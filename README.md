@@ -42,12 +42,12 @@ Path mySecondPath = myPath.getFileSystem().getPath("myRelativePath");
 ## Get the Sftp File System
 
   * Through the installed provider
-```javafor (FileSystemProvider fileSystemProvider : FileSystemProvider.installedProviders()) {
-           if (SftpFileSystemProvider.SFTP_SCHEME.equals(fileSystemProvider.getScheme())) {
-               sftpFileSystemProvider = fileSystemProvider;
-           }
-       }
-
+```java
+for (FileSystemProvider fileSystemProvider : FileSystemProvider.installedProviders()) {
+   if (SftpFileSystemProvider.SFTP_SCHEME.equals(fileSystemProvider.getScheme())) {
+       sftpFileSystemProvider = fileSystemProvider;
+   }
+}
 ```
   * With a path
 ```java
@@ -66,17 +66,15 @@ During the instantiation of the file system, you can set the [working directory]
 When not defined, the working directory default normally to the user's home directory.
 
 ```java
-
 URI uri = new URI("sftp://" + user + ":" + pwd + "@" + host + ":" + port);
 Map<String, String> env = new HashMap<>();
 env.put("working.directory","/myWorkingDirectory");
 
 FileSystem sftpFileSystem = FileSystemProvider.newFileSystem(uri, env);
 Path path = sftpFileSystem.getPath("myRelativePath"); 
-
 ```
 
 ## Implementation
 
-  * Operating System: Actually, only a Linux Server is supported (ie the root begins with "/".
+  * Operating System: Actually, only a Linux/Solaris/Unix Server is supported (ie the root begins with "/").
   * The file system is not fully developed and tested against concurrency.
