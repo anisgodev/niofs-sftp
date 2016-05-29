@@ -9,14 +9,14 @@ Provides access to the files on an SFTP server (that is, an SSH or SCP server).
 
 The below URI is absolute because it specifies a scheme:
 
-    sftp://[ username[: password]@] hostname[: port][ path ]
+    sftp://[ username[: password]@] hostname[: port][ /absolute/path ]
 
 where:
 
   * User and password must be [encoded](https://en.wikipedia.org/wiki/Percent-encoding) as it's an URI format. 
   * Path is always absolute with a scheme. It must then begin with a `/`
 
-With [Paths](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Paths.html)
+With [Paths](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Paths.html):
 
 ```java
 URI uri = URI.create("sftp://myusername:mypassword@somehost:2222/tmp");
@@ -38,6 +38,28 @@ Example:
 Path mySecondPath = myPath.getFileSystem().getPath("myRelativePath");
 ```
 
+
+## Get the Sftp File System
+
+  * Through the installed provider
+```javafor (FileSystemProvider fileSystemProvider : FileSystemProvider.installedProviders()) {
+           if (SftpFileSystemProvider.SFTP_SCHEME.equals(fileSystemProvider.getScheme())) {
+               sftpFileSystemProvider = fileSystemProvider;
+           }
+       }
+
+```
+  * With a path
+```java
+FileSystem sftpFileSystem = Paths.get(URI.create("sftp:/")).getFileSystem();
+```
+
+Don't forget to close it when it's no more needed.
+```java
+sftpFileSystem.close();
+```
+
+
 ## Get a relative path from a Working Directory
 
 During the instantiation of the file system, you can set the [working directory](http://gerardnico.com/wiki/file_system/working_directory). 
@@ -49,7 +71,7 @@ URI uri = new URI("sftp://" + user + ":" + pwd + "@" + host + ":" + port);
 Map<String, String> env = new HashMap<>();
 env.put("working.directory","/myWorkingDirectory");
 
-FileSystem sftpFileSystem = sftpFileSystemProvider.newFileSystem(uri, env);
+FileSystem sftpFileSystem = FileSystemProvider.newFileSystem(uri, env);
 Path path = sftpFileSystem.getPath("myRelativePath"); 
 
 ```

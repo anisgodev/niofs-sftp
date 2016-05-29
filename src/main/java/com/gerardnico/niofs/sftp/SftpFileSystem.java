@@ -3,7 +3,9 @@ package com.gerardnico.niofs.sftp;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 
+import javax.swing.text.html.HTMLDocument;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
@@ -36,8 +38,26 @@ public class SftpFileSystem extends FileSystem {
     private Session session;
 
     /**
+     * Return the working directory
+     * @return the working directory
+     */
+    public String getWorkingDirectory() {
+        if (workingDirectory ==null) {
+            try {
+                workingDirectory = this.getChannelSftp().pwd();
+            } catch (SftpException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return workingDirectory;
+    }
+
+    private String workingDirectory;
+
+    /**
      * Is used in the system file provider
      * to check the access
+     *
      * @return ChannelSftp
      */
     protected ChannelSftp getChannelSftp() {
@@ -46,22 +66,26 @@ public class SftpFileSystem extends FileSystem {
 
             // Extract the user and the password
             String userInfo = this.uri.getUserInfo();
-            String user = userInfo.substring(0, userInfo.indexOf(":"));
-            String password = userInfo.substring(userInfo.indexOf(":") + 1, userInfo.length());
+            String user = null;
+            String password = null;
+            if (userInfo != null) {
+                user = userInfo.substring(0, userInfo.indexOf(":"));
+                password = userInfo.substring(userInfo.indexOf(":") + 1, userInfo.length());
+            }
 
             // No need to get the path of the URI here
 
             // Port
             int port;
-            if (this.uri.getPort()==-1) {
+            if (this.uri.getPort() == -1) {
                 port = 22;
-            }  else {
+            } else {
                 port = this.uri.getPort();
             }
 
             // Host
             String host;
-            if (uri.getHost()!=null) {
+            if (uri.getHost() != null) {
                 host = uri.getHost();
             } else {
                 host = "localhost";
@@ -69,12 +93,14 @@ public class SftpFileSystem extends FileSystem {
 
             try {
 
-                LOGGER.info("Trying to connect to the sftp connection (Uri: sftp://" + user + "@" + host + ":" + port + "' )");
+                LOGGER.info("Trying to connect to the sftp connection (Uri: sftp://" + (user == null ? "null" : user) + "@" + host + ":" + port + "' )");
                 JSch jsch = new JSch();
 
                 // SSH Session
                 this.session = jsch.getSession(user, host, port);
-                session.setPassword(password);
+                if (password != null) {
+                    session.setPassword(password);
+                }
                 java.util.Properties config = new java.util.Properties();
                 config.put("StrictHostKeyChecking", "no");
                 session.setConfig(config);
@@ -85,13 +111,11 @@ public class SftpFileSystem extends FileSystem {
                 this.channelSftp.connect();
 
                 // Environment parameters
-                if (sftpFileSystemBuilder.env != null) {
-                    String workingDirectory = sftpFileSystemBuilder.env.get(KEY_WORKING_DIRECTORY);
-                    if (workingDirectory.charAt(0) != '/') {
-                        throw new IllegalArgumentException("Working directory should be absolute. The value (" + workingDirectory + ") of the environment parameters (" + KEY_WORKING_DIRECTORY + ") does not begin with a /");
-                    } else {
-                        this.channelSftp.cd(workingDirectory);
-                    }
+
+                if (workingDirectory != null) {
+
+
+                    this.channelSftp.cd(workingDirectory);
                 }
 
 
@@ -106,8 +130,6 @@ public class SftpFileSystem extends FileSystem {
     }
 
 
-
-
     /**
      * A file system is open upon creation
      *
@@ -119,6 +141,14 @@ public class SftpFileSystem extends FileSystem {
         this.uri = sftpFileSystemBuilder.uri;
         this.sftpFileSystemBuilder = sftpFileSystemBuilder;
 
+        // Working directory is get here because, we may need it in the paths operations
+        // for relative path. We then don't need to make an SFTP connection to the working directory
+        if (sftpFileSystemBuilder.env != null) {
+            workingDirectory = sftpFileSystemBuilder.env.get(KEY_WORKING_DIRECTORY);
+            if (workingDirectory.charAt(0) != '/') {
+                throw new IllegalArgumentException("Working directory should be absolute. The value (" + workingDirectory + ") of the environment parameters (" + KEY_WORKING_DIRECTORY + ") does not begin with a /");
+            }
+        }
 
 
     }
@@ -135,10 +165,10 @@ public class SftpFileSystem extends FileSystem {
      */
     @Override
     public void close() throws IOException {
-        if ( this.channelSftp !=null) {
+        if (this.channelSftp != null) {
             this.channelSftp.disconnect();
         }
-        if (this.session!= null) {
+        if (this.session != null) {
             this.session.disconnect();
         }
         //TODO: The filesystem pool must be in the sftpFileSystem class and not in the provider
@@ -151,7 +181,7 @@ public class SftpFileSystem extends FileSystem {
     @Override
     public boolean isOpen() {
 
-        if (this.channelSftp==null){
+        if (this.channelSftp == null) {
             return true;
         } else {
             return !this.channelSftp.isClosed();
@@ -207,7 +237,7 @@ public class SftpFileSystem extends FileSystem {
     @Override
     public Path getPath(String first, String... more) {
 
-        return SftpPath.get(this,first, more);
+        return SftpPath.get(this, first, more);
 
     }
 
