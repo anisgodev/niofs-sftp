@@ -25,10 +25,7 @@ import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchEvent.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * A Path implementation for SFTP.
@@ -82,13 +79,17 @@ class SftpPath implements Path {
         }
 
         // Parse the stringPath parameters to a Arrays List of names
-        String stringPathToParse = stringPath;
-        if (isAbsolute) {
-            stringPathToParse = stringPath.substring(1, stringPath.length());
+        if (stringPath != null) {
+
+            String stringPathToParse = stringPath;
+            if (isAbsolute) {
+                stringPathToParse = stringPath.substring(1, stringPath.length());
+            }
+            this.names = new ArrayList(
+                    Arrays.asList(stringPathToParse.split(PATH_SEPARATOR))
+            );
+
         }
-        this.names = new ArrayList(
-                Arrays.asList(stringPathToParse.split(PATH_SEPARATOR))
-        );
 
 
     }
@@ -245,10 +246,12 @@ class SftpPath implements Path {
         if (this.isAbsolute()) {
             return this;
         } else {
-            try {
-                return get(sftpFileSystem, this.getChannelSftp().getHome() + sftpFileSystem.getSeparator() + this.stringPath);
-            } catch (SftpException e) {
-                throw new RuntimeException(e);
+
+            String relativePath = ROOT_PREFIX + String.join(PATH_SEPARATOR, this.getRelativeDirectoryNames());
+            if (!this.stringPath.equals("")) {
+                return get(sftpFileSystem, relativePath + sftpFileSystem.getSeparator() + this.stringPath);
+            } else {
+                return get(sftpFileSystem, relativePath);
             }
 
         }
@@ -269,11 +272,39 @@ class SftpPath implements Path {
     }
 
     public WatchKey register(WatchService watcher, Kind<?>... events) throws IOException {
+
         throw new UnsupportedOperationException();
+
     }
 
     public Iterator<Path> iterator() {
-        throw new UnsupportedOperationException();
+
+        return new Iterator<Path>() {
+            private int i = 0;
+
+            @Override
+            public boolean hasNext() {
+                return (i < getNameCount());
+            }
+
+            @Override
+            public Path next() {
+                if (i < getNameCount()) {
+                    Path result = getName(i);
+                    i++;
+                    return result;
+                } else {
+                    throw new NoSuchElementException();
+                }
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+
+        };
+
     }
 
     public int compareTo(Path other) {
@@ -304,11 +335,25 @@ class SftpPath implements Path {
 
     /**
      * String Path representation used internally to make all Sftp operations
-     *
+     * as the path must be absolute
      * @return
      */
     protected String getStringPath() {
-        return stringPath;
+
+        if (isAbsolute) {
+
+            return stringPath;
+
+        } else {
+
+            String relativePath = ROOT_PREFIX + String.join(PATH_SEPARATOR, this.getRelativeDirectoryNames());
+            if (!this.stringPath.equals("")) {
+                relativePath += sftpFileSystem.getSeparator() + this.stringPath;
+            }
+            return relativePath;
+
+        }
+
     }
 
     /**
@@ -376,7 +421,10 @@ class SftpPath implements Path {
         if (!isAbsolute && relativeDirectoryNames == null) {
 
             String workingDirectory = ((SftpFileSystem) getFileSystem()).getWorkingDirectory();
-            this.relativeDirectoryNames = new ArrayList(Arrays.asList(workingDirectory.split(PATH_SEPARATOR)));
+            List<String> strings = Arrays.asList(workingDirectory.split(PATH_SEPARATOR));
+            // The subList function suppress the root so that
+            // we don't have any empty value
+            this.relativeDirectoryNames = new ArrayList(strings.subList(1,strings.size()));
             return this.relativeDirectoryNames;
 
         } else {

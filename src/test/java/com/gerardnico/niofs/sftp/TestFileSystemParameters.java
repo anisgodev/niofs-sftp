@@ -35,7 +35,7 @@ public class TestFileSystemParameters {
             WORKING_DIR = environments.get("NIOFS_SFTP_WORKING_DIR") != null ? environments.get("NIOFS_SFTP_WORKING_DIR") : null;
             // The home user dir can be found dynamically but to test the Paths operations, we need to set an absolute path
             // and therefore we need to known the home user directory before making a connection.
-            HOME_USER_DIR = environments.get("NIOFS_SFTP_HOME_USER_DIR") != null ? environments.get("NIOFS_SFTP_HOME_USER_DIR") : "/home/gerardni-niosftp/";
+            HOME_USER_DIR = environments.get("NIOFS_SFTP_HOME_USER_DIR") != null ? environments.get("NIOFS_SFTP_HOME_USER_DIR") : "/home/gerardni-niosftp";
             URL = "sftp://" + USER + ":" + PWD + "@" + HOST + ":" + PORT;
         } else {
             HOME_USER_DIR = Paths.get("").toString();

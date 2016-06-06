@@ -7,6 +7,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.*;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * Created by gerard on 23-05-2016.
  * Test of the java.nio.Files functions excepted for the function that modifies the attributes. See {@link FilesAttributesTest}
@@ -52,6 +54,18 @@ public class FilesTest {
 
         Path dst = sftpFileSystem.getPath("target", "CreateFileTest.txt");
         Files.createFile(dst);
+
+    }
+
+    /* The path of file system created with an URI without path parts
+     * default to the working directory
+     */
+    @Test
+    public void isDirectory() throws IOException {
+
+        Path dst = sftpFileSystem.getPath("");
+        boolean isDirectory = Files.isDirectory(dst);
+        assertEquals("This is a directory",true, isDirectory);
 
     }
 

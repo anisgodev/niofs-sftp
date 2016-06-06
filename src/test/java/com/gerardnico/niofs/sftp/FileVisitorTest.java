@@ -15,7 +15,7 @@ import java.nio.file.Path;
 public class FileVisitorTest {
 
 
-    private static FileSystem sftpFileSystem;
+    private static FileSystem fileSystem;
     private static TestFileSystem testFileSystem;
 
 
@@ -24,7 +24,7 @@ public class FileVisitorTest {
 
 
         testFileSystem = new TestFileSystem.TestFileSystemBuilder().build();
-        sftpFileSystem = testFileSystem.get();
+        fileSystem = testFileSystem.get();
 
 
     }
@@ -39,7 +39,7 @@ public class FileVisitorTest {
     @Test
     public void visitFile() throws IOException {
 
-        Path start = sftpFileSystem.getPath(".");
+        Path start = fileSystem.getPath(".");
         Files.walkFileTree(start,new FileVisitorSimple());
 
     }

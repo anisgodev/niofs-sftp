@@ -42,12 +42,24 @@ public class PathsTest {
     }
 
     @Test
-    public void get() throws IOException {
+    public void getWithPath() throws IOException {
 
         // The url must be absolute
         String url = TestFileSystemParameters.URL+ TestFileSystemParameters.HOME_USER_DIR+"/src/test/resources/sftp/README.md";
         Path path = Paths.get(URI.create(url));
         assertEquals("The file ("+url+") must exist",true, Files.exists(path));
+        path.getFileSystem().close();
+
+
+    }
+
+    @Test
+    public void getWithoutPath() throws IOException {
+
+        // The url must be absolute
+        String url = TestFileSystemParameters.URL;
+        Path path = Paths.get(URI.create(url));
+        assertEquals("Without path, it must take the user home directory", TestFileSystemParameters.HOME_USER_DIR, path.toAbsolutePath().toString());
         path.getFileSystem().close();
 
 
