@@ -4,27 +4,27 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.gerardnico</groupId>
-    <artifactId>niofs-sftp</artifactId>
+    <groupId>net.bytle</groupId>
+    <artifactId>bytle-niofs-sftp</artifactId>
     <packaging>jar</packaging>
     <version>1.0.0</version>
 
     <!-- A common and acceptable practice for name is to assemble it from the coordinates using Maven properties -->
     <name>${project.groupId}:${project.artifactId}</name>
     <description>A NIO File system implementation based on Sftp.</description>
-    <url>https://github.com/gerardnico/niofs-sftp</url>
+    <url>https://github.com/bytle/niofs-sftp</url>
 
     <licenses>
         <license>
-            <name>The Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <name>The MIT License (MIT)</name>
+            <url>http://bytle.net/MIT_LICENSE.txt</url>
         </license>
     </licenses>
 
     <scm>
-        <connection>scm:git:git@github.com:gerardnico/niofs-sftp.git</connection>
-        <developerConnection>scm:git:git@github.com:gerardnico/niofs-sftp.git</developerConnection>
-        <url>git@github.com:gerardnico/niofs-sftp.git</url>
+        <connection>scm:git:git@github.com:bytle/bytle-niofs-sftp.git</connection>
+        <developerConnection>scm:git:git@github.com:bytle/bytle-niofs-sftp.git</developerConnection>
+        <url>git@github.com:bytle/bytle-niofs-sftp.git</url>
     </scm>
 
     <properties>
@@ -66,8 +66,8 @@
     <distributionManagement>
         <repository>
             <id>remote-repository</id>
-            <name>Nico Remote</name>
-            <url>scp://gerardni@ftp.gerardnico.com:22/home/gerardni/www/m2-repo</url>
+            <name>Bytle Remote</name>
+            <url>scp://sftp.bytle.net:22${env.BYTLE_M2_REPO_HOME}</url>
         </repository>
     </distributionManagement>
 
@@ -81,6 +81,11 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
             </plugin>
         </plugins>
         <extensions>

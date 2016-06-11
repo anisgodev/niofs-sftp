@@ -1,1 +1,1 @@
-com.gerardnico.niofs.sftp.SftpFileSystemProvider
+net.bytle.niofs.sftp.SftpFileSystemProvider

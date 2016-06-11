@@ -78,3 +78,8 @@ Path path = sftpFileSystem.getPath("myRelativePath");
 
   * Operating System: Actually, only a Linux/Solaris/Unix Server is supported (ie the root begins with "/").
   * The file system is not fully developed and tested against concurrency.
+  
+  
+## Installation
+
+The jar file must be in the classpath as NIO uses the system class loader to find installed providers.
