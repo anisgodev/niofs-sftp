@@ -38,10 +38,10 @@ if (args.length != 0) {
 } else {
 
     def env = System.getenv();
-    USER = env.get("NIOFS_SFTP_USER");
-    PWD = env.get("NIOFS_SFTP_PWD");
-    HOST = env.get("NIOFS_SFTP_HOST");
-    PORT = env.get("NIOFS_SFTP_PORT");
+    USER = env.get("BYTLE_NIOFS_SFTP_USER");
+    PWD = env.get("BYTLE_NIOFS_SFTP_PWD");
+    HOST = env.get("BYTLE_NIOFS_SFTP_HOST");
+    PORT = env.get("BYTLE_NIOFS_SFTP_PORT");
     url = "sftp://" + USER + ":" + PWD + "@" + HOST + ":" + PORT;
 
 }

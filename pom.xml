@@ -65,7 +65,7 @@
 
     <distributionManagement>
         <repository>
-            <id>remote-repository</id>
+            <id>bytle-m2-repo</id>
             <name>Bytle Remote</name>
             <url>scp://sftp.bytle.net:22${env.BYTLE_M2_REPO_HOME}</url>
         </repository>
